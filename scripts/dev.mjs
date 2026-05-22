@@ -11,8 +11,8 @@ console.log('Starting dev services (Next.js + FastAPI)...')
 const isWindows = process.platform === 'win32'
 const pythonCmd = 'python'
 
-console.log(`[dev] Spawning FastAPI via: ${pythonCmd} -m uvicorn api.process:app --port 8000 --reload`)
-const uvicorn = spawn(pythonCmd, ['-m', 'uvicorn', 'api.process:app', '--port', '8000', '--reload'], {
+console.log(`[dev] Spawning FastAPI via: ${pythonCmd} -m uvicorn api.process:app --app-dir backend --port 8000 --reload`)
+const uvicorn = spawn(pythonCmd, ['-m', 'uvicorn', 'api.process:app', '--app-dir', 'backend', '--port', '8000', '--reload'], {
   cwd: ROOT,
   stdio: 'inherit',
   shell: true,

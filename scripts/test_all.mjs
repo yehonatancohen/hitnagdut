@@ -107,7 +107,7 @@ function parseClauses(raw) {
 // ── Excel via Python ──────────────────────────────────────────────────────────
 
 function runExcel(objections, outputName) {
-  const scriptPath = path.join(ROOT, 'scripts', 'generate_excel.py')
+  const scriptPath = path.join(ROOT, 'backend', 'scripts', 'generate_excel.py')
   const tmp = path.join(ROOT, 'scripts', '_tmp_input.json')
   writeFileSync(tmp, JSON.stringify({ objections }), 'utf8')
   const out = execSync(`py "${scriptPath}" < "${tmp}"`, {

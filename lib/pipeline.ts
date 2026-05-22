@@ -216,7 +216,7 @@ const PYTHON_CANDIDATES = process.platform === 'win32'
 
 function runPython(scriptName: string, stdinData: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const scriptPath = path.join(process.cwd(), 'scripts', scriptName)
+    const scriptPath = path.join(process.cwd(), 'backend', 'scripts', scriptName)
 
     function trySpawn(candidates: string[]) {
       const [cmd, ...rest] = candidates
