@@ -1,0 +1,43 @@
+import { auth } from '@clerk/nextjs/server'
+import { addCredits } from '@/lib/credits'
+import { supabaseAdmin } from '@/lib/supabase'
+
+const PLANS = {
+  single:     { credits: 1,  price_ils: 29,  label: 'עבודה בודדת' },
+  bundle_10:  { credits: 10, price_ils: 199, label: '10 עבודות' },
+  monthly_50: { credits: 50, price_ils: 399, label: 'מנוי חודשי 50 עבודות' },
+} as const
+
+type PlanKey = keyof typeof PLANS
+
+export async function POST(req: Request) {
+  const { userId } = await auth()
+  if (!userId) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const body = await req.json()
+  const plan = body.plan as PlanKey
+
+  if (!PLANS[plan]) return Response.json({ error: 'Invalid plan' }, { status: 400 })
+
+  const { credits, price_ils } = PLANS[plan]
+
+  // TODO: Before adding credits, verify payment confirmation from your payment provider.
+  // Replace this block with a real payment check (e.g., Stripe session verification).
+  // For now this just adds credits directly (mock/dev mode).
+
+  await addCredits(userId, credits)
+
+  const { data: user } = await supabaseAdmin
+    .from('users').select('id').eq('clerk_id', userId).single()
+
+  if (user) {
+    await supabaseAdmin.from('purchases').insert({
+      user_id: user.id,
+      plan,
+      credits_added: credits,
+      price_ils,
+    })
+  }
+
+  return Response.json({ ok: true, credits_added: credits })
+}

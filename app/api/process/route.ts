@@ -1,9 +1,15 @@
 import { NextRequest } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { runStage1, runStage2, runStage3ForSection, generateExcel } from '@/lib/pipeline'
+import { getCredits, deductCredit, isUserBlocked } from '@/lib/credits'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const maxDuration = 300
 
 export async function POST(req: NextRequest) {
+  const { userId } = await auth()
+  if (!userId) return Response.json({ error: 'יש להתחבר כדי להשתמש במערכת.' }, { status: 401 })
+
   // Handle JSON Actions (Stage 3 and Excel generation)
   if (req.headers.get('content-type')?.includes('application/json')) {
     const body = await req.json()
@@ -40,9 +46,31 @@ export async function POST(req: NextRequest) {
         return Response.json({ error: err.message || 'Excel generation failed' }, { status: 500 })
       }
     }
+
+    if (action === 'save_job') {
+      const { file_names, file_count, clause_count, result_json } = body
+      const { data: user } = await supabaseAdmin
+        .from('users').select('id').eq('clerk_id', userId).single()
+      if (user) {
+        await supabaseAdmin.from('jobs').insert({ user_id: user.id, file_names, file_count, clause_count, result_json })
+      }
+      return Response.json({ ok: true })
+    }
   }
 
-  // Handle Form Data SSE Action (Stage 1 & 2 extraction)
+  // ── SSE Stage 1 & 2 (FormData) ──────────────────────────────────────────────
+
+  // Auth checks before starting an expensive job
+  const blocked = await isUserBlocked(userId)
+  if (blocked) {
+    return Response.json({ error: 'חשבונך חסום. צור קשר עם התמיכה.' }, { status: 403 })
+  }
+
+  const credits = await getCredits(userId)
+  if (credits <= 0) {
+    return Response.json({ error: 'אין קרדיטים זמינים. רכוש קרדיטים בדשבורד.' }, { status: 402 })
+  }
+
   const formData = await req.formData()
   const pdfFiles = formData.getAll('pdf') as File[]
 
@@ -92,6 +120,9 @@ export async function POST(req: NextRequest) {
             summary.push({ fileName: file.name, megish: file.name, clauses: 0, failed: true })
           }
         }
+
+        // Deduct one credit for the completed job
+        await deductCredit(userId)
 
         const totalClauses = summary.reduce((s, r) => s + r.clauses, 0)
         send({ type: 'log', message: `סה"כ: ${pdfFiles.length} קבצים, ${totalClauses} סעיפים` })
