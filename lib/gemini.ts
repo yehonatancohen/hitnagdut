@@ -10,7 +10,8 @@ export async function geminiGenerateWithRetry(
   prompt: string,
   systemInstruction: string,
   inlineData?: { data: string; mimeType: string },
-  maxRetries = 3
+  responseMimeType?: string,
+  maxRetries = 5
 ): Promise<string> {
   let lastError: Error | null = null
 
@@ -42,6 +43,7 @@ export async function geminiGenerateWithRetry(
 
       const result = await model.generateContent({
         contents: [{ role: 'user', parts }],
+        generationConfig: responseMimeType ? { responseMimeType } : undefined,
       })
 
       const text = result.response.text()

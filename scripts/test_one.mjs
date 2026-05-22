@@ -13,7 +13,7 @@ const ROOT = path.join(__dirname, '..')
 const API_KEY = readFileSync(path.join(ROOT, '.env.local'), 'utf8')
   .split('\n').find(l => l.startsWith('GEMINI_API_KEY='))?.split('=')[1]?.trim()
 
-const PDF = path.join(ROOT, 'results/inputs/אופקים עין גנים התנגדות 14.pdf')
+const PDF = path.join(ROOT, 'results/inputs/התנגדות 4 עירייה.pdf')
 const MODEL = 'gemini-2.5-flash'
 
 const VALID_ESCAPE_CHARS = new Set(['"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u'])
