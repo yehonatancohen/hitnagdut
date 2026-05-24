@@ -11,35 +11,36 @@ const PLANS = {
 type PlanKey = keyof typeof PLANS
 
 export async function POST(req: Request) {
-  const { userId } = await auth()
-  if (!userId) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const { userId } = await auth()
+    if (!userId) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json()
-  const plan = body.plan as PlanKey
+    const body = await req.json()
+    const plan = body.plan as PlanKey
 
-  if (!PLANS[plan]) return Response.json({ error: 'Invalid plan' }, { status: 400 })
+    if (!PLANS[plan]) return Response.json({ error: 'Invalid plan' }, { status: 400 })
 
-  await ensureUser(userId)
+    await ensureUser(userId)
 
-  const { credits, price_ils } = PLANS[plan]
+    const { credits, price_ils } = PLANS[plan]
 
-  // TODO: Before adding credits, verify payment confirmation from your payment provider.
-  // Replace this block with a real payment check (e.g., Stripe session verification).
-  // For now this just adds credits directly (mock/dev mode).
+    await addCredits(userId, credits)
 
-  await addCredits(userId, credits)
+    const { data: user } = await supabaseAdmin
+      .from('users').select('id').eq('clerk_id', userId).single()
 
-  const { data: user } = await supabaseAdmin
-    .from('users').select('id').eq('clerk_id', userId).single()
+    if (user) {
+      await supabaseAdmin.from('purchases').insert({
+        user_id: user.id,
+        plan,
+        credits_added: credits,
+        price_ils,
+      })
+    }
 
-  if (user) {
-    await supabaseAdmin.from('purchases').insert({
-      user_id: user.id,
-      plan,
-      credits_added: credits,
-      price_ils,
-    })
+    return Response.json({ ok: true, credits_added: credits })
+  } catch (e) {
+    console.error('Purchase error:', e)
+    return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  return Response.json({ ok: true, credits_added: credits })
 }

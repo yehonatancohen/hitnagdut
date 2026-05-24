@@ -3,59 +3,73 @@
 import { SignIn } from '@clerk/nextjs'
 import Link from 'next/link'
 
-const darkAppearance = {
+const appearance = {
   variables: {
-    colorBackground: '#1e293b',
-    colorInputBackground: '#0f172a',
-    colorInputText: '#f1f5f9',
-    colorText: '#f1f5f9',
-    colorTextSecondary: '#94a3b8',
-    colorPrimary: '#3b82f6',
-    colorDanger: '#f87171',
-    borderRadius: '0.5rem',
-    fontFamily: 'var(--font-heebo), sans-serif',
+    colorBackground: '#ffffff',
+    colorInputBackground: '#faf9f6',
+    colorInputText: 'oklch(17% 0.045 258)',
+    colorText: 'oklch(17% 0.045 258)',
+    colorTextSecondary: 'oklch(58% 0.022 258)',
+    colorPrimary: 'oklch(17% 0.045 258)',
+    colorDanger: '#DC2626',
+    borderRadius: '4px',
+    fontFamily: 'var(--font-heebo), Heebo, sans-serif',
   },
   elements: {
     rootBox: 'w-full max-w-md mx-auto',
-    card: 'bg-slate-800 border border-slate-700 shadow-2xl rounded-xl w-full',
-    headerTitle: 'text-white text-right w-full',
-    headerSubtitle: 'text-slate-400 text-right w-full',
-    socialButtonsBlockButton: 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600 rounded-lg',
-    socialButtonsBlockButtonText: 'text-white font-medium',
-    dividerLine: 'bg-slate-600',
-    dividerText: 'text-slate-400',
-    formFieldLabel: 'text-slate-300 text-sm text-right block w-full',
-    formFieldInput: 'bg-slate-900 border-slate-600 text-white placeholder-slate-500 focus:border-blue-500 text-right',
-    formButtonPrimary: 'bg-blue-600 hover:bg-blue-500 text-white font-semibold',
-    footerActionText: 'text-slate-400',
-    footerActionLink: 'text-blue-400 hover:text-blue-300',
-    identityPreviewText: 'text-white',
-    identityPreviewEditButton: 'text-blue-400',
-    formFieldInputShowPasswordButton: 'text-slate-400',
-    otpCodeFieldInput: 'bg-slate-900 border-slate-600 text-white',
+    card: 'shadow-none border border-[oklch(88%_0.018_78)] rounded-[4px] w-full bg-white',
+    headerTitle: 'text-right w-full font-extrabold',
+    headerSubtitle: 'text-right w-full',
+    socialButtonsBlockButton: 'border border-[oklch(88%_0.018_78)] bg-white hover:bg-[oklch(96.5%_0.012_78)] rounded-[4px] transition-colors',
+    socialButtonsBlockButtonText: 'font-semibold',
+    dividerLine: 'bg-[oklch(88%_0.018_78)]',
+    dividerText: 'text-[oklch(58%_0.022_258)]',
+    formFieldLabel: 'text-right block w-full text-sm font-semibold',
+    formFieldInput: 'bg-[oklch(96.5%_0.012_78)] border-[oklch(88%_0.018_78)] text-right rounded-[4px] focus:border-[oklch(17%_0.045_258)]',
+    formButtonPrimary: 'bg-[oklch(17%_0.045_258)] hover:opacity-90 rounded-[4px] font-bold transition-opacity',
+    footerActionText: 'text-[oklch(58%_0.022_258)]',
+    footerActionLink: 'text-[oklch(65%_0.13_72)] hover:opacity-80 font-semibold',
+    identityPreviewText: 'text-[oklch(17%_0.045_258)]',
+    identityPreviewEditButton: 'text-[oklch(65%_0.13_72)]',
+    formFieldInputShowPasswordButton: 'text-[oklch(58%_0.022_258)]',
+    otpCodeFieldInput: 'border-[oklch(88%_0.018_78)] bg-[oklch(96.5%_0.012_78)] rounded-[4px]',
   },
 }
 
 export default function SignInPage() {
   return (
-    <main className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6" dir="rtl">
-      <div className="mb-8 text-center">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+    <main
+      style={{
+        minHeight: '100vh',
+        background: 'var(--parchment)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+      }}
+      dir="rtl"
+    >
+      {/* Logo + heading */}
+      <div style={{ marginBottom: 28, textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{
+            width: 40, height: 40, background: 'var(--brass)', borderRadius: 4,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 900, fontSize: 22, color: '#fff', letterSpacing: '-1px',
+          }}>
+            נ
           </div>
-          <h1 className="text-2xl font-bold text-white">כניסה למערכת</h1>
+          <span style={{ fontWeight: 800, fontSize: 24, color: 'var(--navy)', letterSpacing: '-0.5px' }}>נוסח</span>
         </div>
-        <p className="text-slate-400 text-sm">מערכת ניתוח התנגדויות תכנוניות</p>
+        <p style={{ color: 'var(--muted)', fontSize: 14 }}>כניסה למערכת ניתוח התנגדויות</p>
       </div>
 
-      <SignIn appearance={darkAppearance} />
+      <SignIn appearance={appearance} />
 
-      <p className="mt-6 text-slate-500 text-sm">
+      <p style={{ marginTop: 20, color: 'var(--muted)', fontSize: 14 }}>
         אין לך חשבון?{' '}
-        <Link href="/sign-up" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+        <Link href="/sign-up" style={{ color: 'var(--brass)', fontWeight: 700, textDecoration: 'none' }}>
           הרשמה
         </Link>
       </p>

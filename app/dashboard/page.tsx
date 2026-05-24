@@ -47,11 +47,15 @@ export default function DashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: planKey }),
       })
-      const data = await res.json()
-      if (data.ok) {
+      const data = res.ok ? await res.json() : null
+      if (data?.ok) {
         setCredits(prev => (prev ?? 0) + data.credits_added)
-        setPurchaseMsg(`נוספו ${data.credits_added} קרדיטים לחשבונך`)
+        setPurchaseMsg(`✓ נוספו ${data.credits_added} קרדיטים לחשבונך`)
+      } else {
+        setPurchaseMsg(`שגיאה: הרכישה נכשלה. נסה שוב.`)
       }
+    } catch {
+      setPurchaseMsg('שגיאה: הרכישה נכשלה. נסה שוב.')
     } finally {
       setPurchasing(null)
     }
@@ -118,8 +122,11 @@ export default function DashboardPage() {
 
           {purchaseMsg && (
             <div style={{
-              marginBottom: 16, background: 'rgba(29,111,66,0.08)', border: '1px solid rgba(29,111,66,0.2)',
-              color: 'var(--excel-green-text)', fontSize: 14, fontWeight: 600, padding: '10px 16px', borderRadius: 4,
+              marginBottom: 16,
+              background: purchaseMsg.startsWith('שגיאה') ? 'rgba(220,38,38,0.07)' : 'rgba(29,111,66,0.08)',
+              border: `1px solid ${purchaseMsg.startsWith('שגיאה') ? 'rgba(220,38,38,0.2)' : 'rgba(29,111,66,0.2)'}`,
+              color: purchaseMsg.startsWith('שגיאה') ? '#DC2626' : 'var(--excel-green-text)',
+              fontSize: 14, fontWeight: 600, padding: '10px 16px', borderRadius: 4,
             }}>
               {purchaseMsg}
             </div>
