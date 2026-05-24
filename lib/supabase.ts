@@ -1,10 +1,23 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+// Lazy singleton — avoids crashing at build time when env vars aren't present
+let _instance: SupabaseClient | null = null
 
-// Server-side client with full privileges (never expose to browser)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+function getInstance(): SupabaseClient {
+  if (!_instance) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!url || !key) throw new Error('Supabase env vars not configured')
+    _instance = createClient(url, key)
+  }
+  return _instance
+}
+
+export const supabaseAdmin = new Proxy({} as SupabaseClient, {
+  get(_, prop: string) {
+    return (getInstance() as any)[prop]
+  },
+})
 
 export type UserRole = 'user' | 'admin'
 
