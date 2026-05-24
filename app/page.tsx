@@ -48,60 +48,294 @@ interface DownloadFile {
   url: string
 }
 
-function ChevronIcon({ open }: { open: boolean }) {
-  return (
-    <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-      fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
-  )
-}
+// ── Small helpers ────────────────────────────────────────────────────────────
 
 function ConfidenceFlag({ label }: { label?: string }) {
   return (
     <span title="רמת ביטחון AI נמוכה — מומלץ לבדוק ידנית"
-      className="inline-flex items-center gap-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold px-1.5 py-0.5 rounded">
-      <svg className="w-2.5 h-2.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-      </svg>
-      {label || 'ביטחון נמוך'}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 3,
+        background: 'rgba(217,119,6,0.08)', color: '#B45309',
+        border: '1px solid rgba(217,119,6,0.2)',
+        fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 3,
+      }}>
+      ⚠ {label || 'ביטחון נמוך'}
     </span>
   )
 }
 
-function CollapsibleSection({
-  title, open, onToggle, children, badge,
-}: {
-  title: string; open: boolean; onToggle: () => void; children: React.ReactNode; badge?: string
-}) {
+// ── Landing page sections ────────────────────────────────────────────────────
+
+function PDFMock() {
   return (
-    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-      <button
-        onClick={onToggle}
-        className="flex items-center justify-between w-full px-5 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <span>{title}</span>
-          {badge && (
-            <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full font-bold">{badge}</span>
-          )}
-        </div>
-        <ChevronIcon open={open} />
-      </button>
-      {open && <div className="border-t border-slate-100">{children}</div>}
+    <div style={{
+      background: '#fff', borderRadius: 6, padding: '18px 20px 16px',
+      boxShadow: '0 8px 32px rgba(10,22,60,0.13)', border: '1px solid var(--border-warm)',
+      width: 240, direction: 'rtl', position: 'relative', flexShrink: 0,
+    }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: '0 0 18px 18px', borderColor: 'transparent transparent var(--border-warm) transparent' }} />
+      <div style={{ position: 'absolute', top: 0, left: 0, width: 18, height: 18, background: 'var(--parchment)', borderRadius: '0 0 4px 0' }} />
+      <div style={{ borderBottom: '2px solid var(--navy)', paddingBottom: 10, marginBottom: 14, textAlign: 'center' }}>
+        <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--navy)', lineHeight: 1.4 }}>הוועדה המקומית לתכנון ובנייה</div>
+        <div style={{ fontSize: 9, color: 'var(--navy)', opacity: 0.5, marginTop: 3 }}>התנגדות לתכנית מתאר מס׳ 101-0234218</div>
+      </div>
+      {[92, 86, 100, 74, 90, 88, 78].map((w, i) => (
+        <div key={i} style={{ height: 6, background: 'var(--navy)', opacity: 0.1 + (i % 3) * 0.02, borderRadius: 2, marginBottom: 5, width: `${w}%` }} />
+      ))}
+      <div style={{ margin: '10px 0', borderTop: '1px solid var(--border-warm)' }} />
+      {[88, 94, 71, 90, 83].map((w, i) => (
+        <div key={i} style={{ height: 6, background: 'var(--navy)', opacity: 0.09, borderRadius: 2, marginBottom: 5, width: `${w}%` }} />
+      ))}
+      <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 8, color: 'var(--navy)', opacity: 0.38 }}>עמוד 24 מתוך 24</div>
+        <div style={{ fontSize: 8, background: '#E8302B', color: '#fff', padding: '2px 6px', borderRadius: 2, fontWeight: 700 }}>PDF</div>
+      </div>
     </div>
   )
 }
 
+function MiniExcelTable() {
+  const cols = ['מס׳', 'פרק/סעיפים', 'מלל ההתנגדות', 'נושא', 'גורם מייעץ']
+  const rows = [
+    ['1', 'פרק ג׳, ס׳ 14', 'הגברת הצפיפות המוצעת...', 'צפיפות מגורים', 'משרד הבינוי'],
+    ['2', 'פרק ד׳, ס׳ 22', 'מקומות חניה בלתי מספיקים...', 'תחבורה', 'משרד התחבורה'],
+    ['3', 'פרק ב׳, ס׳ 8', 'גובה הבנייה החורג מהתקן...', 'גובה ונפח', 'הוועדה המחוזית'],
+    ['4', 'פרק ה׳, ס׳ 31', 'ניקוז מי הגשם עלולים...', 'תשתיות', 'רשות המים'],
+  ]
+  const isGreen = (ci: number) => ci === 1 || ci === 4
+  return (
+    <div style={{ background: '#fff', borderRadius: 6, overflow: 'hidden', boxShadow: '0 8px 32px rgba(10,22,60,0.14)', border: '1px solid var(--border-warm)', width: 380, flexShrink: 0 }}>
+      <div style={{ background: '#1D6F42', height: 28, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 7 }}>
+        {['#FF5F57', '#FFBD2E', '#28C840'].map((c, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', marginRight: 'auto', fontWeight: 500 }}>התנגדויות_2024.xlsx</span>
+      </div>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl', fontSize: 11 }}>
+          <thead>
+            <tr>
+              {cols.map((col, ci) => (
+                <th key={ci} style={{ background: isGreen(ci) ? 'var(--excel-green)' : 'var(--excel-blue)', color: '#fff', padding: '7px 9px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', borderLeft: '1px solid rgba(255,255,255,0.15)' }}>{col}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, ri) => (
+              <tr key={ri} style={{ background: ri % 2 === 0 ? '#fff' : '#EBF2F8' }}>
+                {row.map((cell, ci) => (
+                  <td key={ci} style={{ padding: '6px 9px', borderBottom: '1px solid #E1E8F0', borderLeft: '1px solid #E1E8F0', whiteSpace: ci === 2 ? 'normal' : 'nowrap', maxWidth: ci === 2 ? 120 : undefined, overflow: 'hidden', textOverflow: ci === 2 ? 'ellipsis' : undefined, color: isGreen(ci) ? 'var(--excel-green-text)' : '#0F1F3D', fontWeight: isGreen(ci) ? 600 : 400, background: isGreen(ci) ? 'rgba(29,111,66,0.055)' : undefined }}>{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function LandingPage({ onEnterApp }: { onEnterApp: () => void }) {
+  return (
+    <div style={{ direction: 'rtl' }}>
+
+      {/* ── Hero ── */}
+      <section style={{ minHeight: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 24px', position: 'relative', overflow: 'hidden' }}>
+        {/* Grid bg */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: 'linear-gradient(var(--border-warm) 1px, transparent 1px), linear-gradient(90deg, var(--border-warm) 1px, transparent 1px)', backgroundSize: '48px 48px', opacity: 0.4, maskImage: 'radial-gradient(ellipse 80% 70% at 50% 40%, black, transparent)' }} />
+
+        <div style={{ textAlign: 'center', maxWidth: 820, marginBottom: 72, position: 'relative', zIndex: 1 }} className="fade-up">
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--brass)', color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: 1.2, padding: '5px 14px', borderRadius: 2, marginBottom: 28, textTransform: 'uppercase' as const }}>
+            כלי AI לתכנון עירוני ✦ ישראל
+          </div>
+          <h1 style={{ fontSize: 'clamp(32px, 5.5vw, 64px)', fontWeight: 800, color: 'var(--navy)', lineHeight: 1.12, margin: '0 0 22px', letterSpacing: '-1.5px' }}>
+            3 שעות של עבודת מזכירה.<br />
+            <span style={{ color: 'var(--brass)' }}>10 דקות</span> ביקורת שלך.
+          </h1>
+          <p style={{ fontSize: 18, color: 'var(--navy)', opacity: 0.65, lineHeight: 1.7, maxWidth: 560, margin: '0 auto 40px' }}>
+            העלה PDF של התנגדויות תכנוניות — קבל טבלת Excel מובנית עם כל הסעיפים, הנושאים והגורמים המייעצים, תוך 20 שניות.
+          </p>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button onClick={onEnterApp} style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 4, padding: '14px 28px', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'opacity 0.18s' }}>
+              התחל בחינם — מסמך ראשון ללא עלות
+            </button>
+            <a href="#preview" style={{ fontSize: 15, fontWeight: 600, color: 'var(--navy)', opacity: 0.6, textDecoration: 'none' }}>ראה דוגמה ↓</a>
+          </div>
+        </div>
+
+        {/* PDF → Excel visual */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, width: '100%', maxWidth: 840, zIndex: 1, flexWrap: 'wrap' }}>
+          <PDFMock />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--brass)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(180,140,50,0.35)' }}>
+              <svg width="20" height="16" viewBox="0 0 22 18" fill="none"><path d="M20 9H2M2 9L10 1M2 9l8 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </div>
+            <span style={{ fontSize: 11, color: 'var(--navy)', opacity: 0.45, fontWeight: 600, whiteSpace: 'nowrap' }}>~20 שניות</span>
+          </div>
+          <MiniExcelTable />
+        </div>
+      </section>
+
+      {/* ── How It Works ── */}
+      <section id="how" style={{ padding: '96px 24px', background: 'var(--navy)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--brass)', letterSpacing: 2, textTransform: 'uppercase' as const, marginBottom: 16 }}>תהליך פשוט</div>
+            <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 42px)', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.5px' }}>שלושה צעדים בלבד</h2>
+          </div>
+          <div style={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {[
+              { num: '01', title: 'גרור PDF', body: 'גרור קובץ PDF של ההתנגדויות התכנוניות, או לחץ להעלאה. כל פורמט PDF נתמך — גם קבצים ממוסרקים.' },
+              { num: '02', title: 'הבינה המלאכותית מנתחת', body: 'המערכת קוראת, מזהה ומסווגת כל התנגדות — מס׳ סעיף, פרק, נושא ורשות מייעצת.' },
+              { num: '03', title: 'הורד Excel', body: 'קובץ xlsx מוכן — עם כותרות צבועות, שורות לסירוגין, וכל 5 עמודות ממולאות. פתח ב-Excel ועבד מיד.' },
+            ].map((step, i) => (
+              <div key={i} style={{ flex: '1 1 280px', maxWidth: 360, padding: '40px 36px', position: 'relative' }}>
+                <div style={{ position: 'absolute', top: 24, left: 24, fontSize: 72, fontWeight: 900, color: 'rgba(255,255,255,0.04)', lineHeight: 1, letterSpacing: '-4px', userSelect: 'none' as const }}>{step.num}</div>
+                <div style={{ width: 52, height: 52, borderRadius: 8, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brass)', marginBottom: 24 }}>
+                  <svg width="26" height="26" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    {i === 0 && <><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M14 2v6h6" strokeLinejoin="round" /><path d="M14 18v-6M11 15l3 3 3-3" strokeLinecap="round" strokeLinejoin="round" /></>}
+                    {i === 1 && <><circle cx="14" cy="14" r="10" /><path d="M10 14h8M14 10v8" strokeLinecap="round" /><circle cx="14" cy="14" r="3" fill="currentColor" opacity=".25" /></>}
+                    {i === 2 && <><rect x="3" y="6" width="22" height="16" rx="2" /><path d="M3 11h22M9 11v11M16 11v11" /><path d="M7 8h.01M11 8h.01" strokeLinecap="round" /></>}
+                  </svg>
+                </div>
+                <h3 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 12px', letterSpacing: '-0.3px' }}>{step.title}</h3>
+                <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.58)', lineHeight: 1.7, margin: 0 }}>{step.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Excel Preview ── */}
+      <section id="preview" style={{ padding: '96px 24px', background: 'var(--parchment)', borderTop: '1px solid var(--border-warm)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--brass)', letterSpacing: 2, textTransform: 'uppercase' as const, marginBottom: 16 }}>הפלט</div>
+            <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 42px)', fontWeight: 800, color: 'var(--navy)', margin: '0 0 14px', letterSpacing: '-0.5px' }}>כך נראה הקובץ שתקבל</h2>
+            <p style={{ fontSize: 16, color: 'var(--navy)', opacity: 0.6, margin: 0 }}>5 עמודות מובנות, כותרות ממוקדות, מוכן לעריכה מיידית</p>
+          </div>
+          <div style={{ borderRadius: 8, overflow: 'hidden', boxShadow: '0 16px 56px rgba(10,22,60,0.14)', border: '1px solid var(--border-warm)', maxWidth: 1000, margin: '0 auto' }}>
+            <div style={{ background: '#1D6F42', padding: '0 16px', height: 36, display: 'flex', alignItems: 'center', gap: 8 }}>
+              {['#FF5F57', '#FFBD2E', '#28C840'].map((c, i) => <div key={i} style={{ width: 12, height: 12, borderRadius: '50%', background: c }} />)}
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', marginRight: 'auto', fontWeight: 500 }}>התנגדויות_תל-אביב_2024.xlsx — Excel</span>
+            </div>
+            <div style={{ background: '#F4F4F4', borderBottom: '1px solid #D8D8D8', padding: '4px 16px', display: 'flex', gap: 20, direction: 'rtl' }}>
+              {['בית', 'הוספה', 'פריסת עמוד', 'נוסחאות'].map((t, i) => (
+                <span key={i} style={{ fontSize: 12, color: i === 0 ? '#1D6F42' : '#555', fontWeight: i === 0 ? 700 : 400, padding: '2px 0', borderBottom: i === 0 ? '2px solid #1D6F42' : 'none' }}>{t}</span>
+              ))}
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl', fontSize: 13 }}>
+                <thead>
+                  <tr>
+                    <th style={{ background: '#E8E8E8', padding: '8px 10px', width: 36, borderLeft: '1px solid #D0D0D0', borderBottom: '1px solid #D0D0D0', fontSize: 11, color: '#666' }} />
+                    {['מס׳', 'פרק/סעיפים', 'מלל ההתנגדות', 'נושא', 'גורם מייעץ'].map((col, ci) => {
+                      const isGreen = ci === 1 || ci === 4
+                      return <th key={ci} style={{ background: isGreen ? 'var(--excel-green)' : 'var(--excel-blue)', color: '#fff', padding: '10px 14px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', borderLeft: '1px solid rgba(255,255,255,0.15)', fontSize: 13 }}>{col}</th>
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { num: '1', chap: 'פרק ג׳, סעיף 14', text: 'הגברת הצפיפות המוצעת תפגע בצביון המרחב הציבורי ובאיכות החיים של תושבי האזור', topic: 'צפיפות מגורים', advisor: 'משרד הבינוי והשיכון' },
+                    { num: '2', chap: 'פרק ד׳, סעיף 22(א)', text: 'התכנית אינה מספקת מספר מקומות חניה מינימלי בהתאם לתקן עבור מבני מגורים', topic: 'תחבורה וחניה', advisor: 'משרד התחבורה' },
+                    { num: '3', chap: 'פרק ב׳, סעיף 8(ג)', text: 'גובה הבנייה המוצע חורג ממגבלות הגובה הקבועות בתכנית המתאר הארצית', topic: 'גובה ונפח בנייה', advisor: 'הוועדה המחוזית' },
+                    { num: '4', chap: 'פרק ה׳, סעיף 31', text: 'אין בתכנית פתרון מספק לניקוז מי הגשם שעלולים לגרום להצפות', topic: 'תשתיות ניקוז', advisor: 'רשות המים הישראלית' },
+                    { num: '5', chap: 'פרק א׳, סעיף 3(ב)', text: 'ההליך לא כלל שיתוף ציבור מספיק ותושבים לא קיבלו הודעה מראש כנדרש בחוק', topic: 'הליך תכנוני', advisor: 'משרד הפנים' },
+                  ].map((row, ri) => {
+                    const cells = [row.num, row.chap, row.text, row.topic, row.advisor]
+                    return (
+                      <tr key={ri} style={{ background: ri % 2 === 0 ? '#fff' : '#EBF2F9' }}>
+                        <td style={{ background: '#F2F2F2', padding: '8px 10px', textAlign: 'center', fontSize: 11, color: '#888', borderLeft: '1px solid #D8D8D8', borderBottom: '1px solid #E4E4E4' }}>{ri + 2}</td>
+                        {cells.map((cell, ci) => {
+                          const isGreen = ci === 1 || ci === 4
+                          return <td key={ci} style={{ padding: '10px 14px', borderBottom: '1px solid #DDE5EF', borderLeft: '1px solid #DDE5EF', color: isGreen ? 'var(--excel-green-text)' : '#0F1F3D', fontWeight: isGreen ? 600 : 400, background: isGreen ? 'rgba(29,111,66,0.05)' : undefined, lineHeight: 1.5, whiteSpace: ci === 2 ? 'normal' : 'nowrap' }}>{cell}</td>
+                        })}
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ background: '#1D6F42', padding: '4px 16px', display: 'flex', gap: 24, direction: 'rtl' }}>
+              {['מוכן', '5 רשומות', 'ספירה: 5'].map((t, i) => <span key={i} style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>{t}</span>)}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Pricing ── */}
+      <section id="pricing" style={{ padding: '96px 24px', background: 'var(--parchment)', borderTop: '1px solid var(--border-warm)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 60 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--brass)', letterSpacing: 2, textTransform: 'uppercase' as const, marginBottom: 16 }}>תמחור</div>
+            <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 42px)', fontWeight: 800, color: 'var(--navy)', margin: '0 0 12px', letterSpacing: '-0.5px' }}>תשלום לפי צריכה. ללא מינוי כפוי.</h2>
+            <p style={{ fontSize: 16, color: 'var(--navy)', opacity: 0.58, margin: 0 }}>המסמך הראשון ללא עלות — אין צורך בכרטיס אשראי.</p>
+          </div>
+          <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap', alignItems: 'stretch' }}>
+            {[
+              { name: 'מסמך בודד', price: '29', unit: '₪ למסמך', features: ['מסמך אחד', 'Excel מלא — 5 עמודות', 'הורדה מיידית', 'תקף 30 יום'], cta: 'רכוש מסמך', highlight: false },
+              { name: 'חבילת 10', price: '199', unit: '₪ / 10 מסמכים', sub: '19.90 ₪ למסמך', features: ['10 מסמכים', 'Excel מלא — 5 עמודות', 'הורדה מיידית', 'תקף 90 יום', 'עדיפות בתור'], cta: 'רכוש חבילה', highlight: true },
+              { name: 'חודשי', price: '399', unit: '₪ / חודש', sub: '50 מסמכים, 7.98 ₪ למסמך', features: ['50 מסמכים בחודש', 'Excel מלא — 5 עמודות', 'הורדה מיידית', 'תמיכה עדיפותית', 'היסטוריית מסמכים'], cta: 'התחל מנוי', highlight: false },
+            ].map((tier, i) => (
+              <div key={i} style={{ flex: '1 1 280px', maxWidth: 340, background: tier.highlight ? 'var(--navy)' : '#fff', border: tier.highlight ? '2px solid var(--brass)' : '1px solid var(--border-warm)', borderRadius: 8, padding: '36px 32px', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: tier.highlight ? '0 12px 40px rgba(10,22,60,0.18)' : '0 2px 12px rgba(10,22,60,0.06)' }}>
+                {tier.highlight && <div style={{ position: 'absolute', top: -13, right: '50%', transform: 'translateX(50%)', background: 'var(--brass)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 14px', borderRadius: 20, letterSpacing: 0.8, whiteSpace: 'nowrap' as const }}>הכי פופולרי</div>}
+                <div style={{ marginBottom: 28 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: tier.highlight ? 'rgba(255,255,255,0.55)' : 'var(--navy)', marginBottom: 8 }}>{tier.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
+                    <span style={{ fontSize: 48, fontWeight: 900, letterSpacing: '-2px', color: tier.highlight ? '#fff' : 'var(--navy)', lineHeight: 1 }}>{tier.price}</span>
+                    <span style={{ fontSize: 15, color: tier.highlight ? 'rgba(255,255,255,0.65)' : 'var(--navy)', opacity: 0.7 }}>{tier.unit}</span>
+                  </div>
+                  {'sub' in tier && <div style={{ fontSize: 13, color: 'var(--brass)', fontWeight: 600 }}>{(tier as any).sub}</div>}
+                </div>
+                <div style={{ flex: 1, marginBottom: 28 }}>
+                  {tier.features.map((f, fi) => (
+                    <div key={fi} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 11 }}>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="7.25" stroke={tier.highlight ? 'rgba(255,255,255,0.25)' : 'var(--border-warm)'} strokeWidth="1.5" />
+                        <path d="M5 8l2 2 4-4" stroke={tier.highlight ? 'var(--brass)' : 'var(--excel-green-text)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span style={{ fontSize: 14, color: tier.highlight ? 'rgba(255,255,255,0.8)' : 'var(--navy)', opacity: tier.highlight ? 1 : 0.85 }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={onEnterApp} style={{ width: '100%', padding: '12px', background: tier.highlight ? 'var(--brass)' : 'transparent', color: tier.highlight ? '#fff' : 'var(--navy)', border: tier.highlight ? 'none' : '1.5px solid var(--border-warm)', borderRadius: 4, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'opacity 0.18s' }}>
+                  {tier.cta}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer style={{ background: 'var(--navy)', padding: '40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, direction: 'rtl' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 30, height: 30, background: 'var(--brass)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16, color: '#fff' }}>נ</div>
+          <span style={{ fontWeight: 800, fontSize: 18, color: '#fff', letterSpacing: '-0.5px' }}>נוסח</span>
+        </div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)' }}>© 2024 נוסח · כל הזכויות שמורות</div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)' }}>נבנה לשוק הישראלי</div>
+      </footer>
+    </div>
+  )
+}
+
+// ── Main Tool ────────────────────────────────────────────────────────────────
+
+const PROCESSING_STEPS = [
+  { label: 'קריאת המסמך', detail: 'מנתח מבנה PDF ומחלץ טקסט גולמי' },
+  { label: 'זיהוי ההתנגדויות', detail: 'מאתר גבולות כל התנגדות בטקסט' },
+  { label: 'מיצוי ומיון', detail: 'מסווג נושאים, סעיפים וגורמים מייעצים' },
+  { label: 'בניית הטבלה', detail: 'יוצר קובץ Excel עם עיצוב מלא' },
+]
+
 export default function Home() {
   const { isLoaded, isSignedIn } = useUser()
+  const [view, setView] = useState<'landing' | 'tool'>('landing')
   const [state, setState] = useState<AppState>('idle')
   const [files, setFiles] = useState<File[]>([])
   const [fileName, setFileName] = useState('')
   const [outputMode, setOutputMode] = useState<OutputMode>('merged')
   const [isDragging, setIsDragging] = useState(false)
-  const [filesOpen, setFilesOpen] = useState(true)
-  const [optionsOpen, setOptionsOpen] = useState(false)
   const [logsOpen, setLogsOpen] = useState(true)
   const [logs, setLogs] = useState<string[]>([])
   const [errorMsg, setErrorMsg] = useState('')
@@ -115,21 +349,33 @@ export default function Home() {
   const [objections, setObjections] = useState<ObjectionItem[]>([])
   const [stage3Loading, setStage3Loading] = useState(false)
   const [stage3Progress, setStage3Progress] = useState({ current: 0, total: 0 })
+  const [processingStep, setProcessingStep] = useState(0)
 
   const [showReportModal, setShowReportModal] = useState(false)
   const [reportText, setReportText] = useState('')
   const [reportSubmitted, setReportSubmitted] = useState(false)
   const [submittingReport, setSubmittingReport] = useState(false)
 
+  // Skip landing for logged-in users
+  useEffect(() => {
+    if (isLoaded && isSignedIn) setView('tool')
+  }, [isLoaded, isSignedIn])
+
   useEffect(() => {
     if (logsOpen) logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [logs, logsOpen])
 
   useEffect(() => {
-    if (isSignedIn) {
-      fetch('/api/credits').then(r => r.json()).then(d => setCredits(d.credits ?? 0))
-    }
+    if (!isSignedIn) return
+    fetch('/api/credits').then(r => r.ok ? r.json() : null).then(d => setCredits(d?.credits ?? 0)).catch(() => {})
   }, [isSignedIn])
+
+  // Simulate processing step progress based on log messages
+  useEffect(() => {
+    if (state !== 'processing') return
+    const step = logs.filter(l => l.includes('שלב')).length
+    setProcessingStep(Math.min(step, PROCESSING_STEPS.length - 1))
+  }, [logs, state])
 
   const toggleAnalysisExpand = (key: string) => {
     setExpandedAnalysis(prev => {
@@ -176,26 +422,12 @@ export default function Home() {
 
   const startProcessing = async () => {
     if (!files.length) return
+    if (!isSignedIn) { setErrorMsg('יש להתחבר למערכת לפני עיבוד מסמכים.'); setState('error'); return }
+    if (credits !== null && credits <= 0) { setErrorMsg('אין קרדיטים זמינים. יש לרכוש קרדיטים בדשבורד.'); setState('error'); return }
 
-    if (!isSignedIn) {
-      setErrorMsg('יש להתחבר למערכת לפני עיבוד מסמכים.')
-      setState('error')
-      return
-    }
-    if (credits !== null && credits <= 0) {
-      setErrorMsg('אין קרדיטים זמינים. יש לרכוש קרדיטים בדשבורד.')
-      setState('error')
-      return
-    }
-
-    setState('processing')
-    setLogs([])
-    setSummary([])
-    setDownloadFiles([])
-    setObjections([])
-    setLogsOpen(true)
-    setErrorMsg('')
-    setExpandedAnalysis(new Set())
+    setState('processing'); setLogs([]); setSummary([]); setDownloadFiles([])
+    setObjections([]); setLogsOpen(true); setErrorMsg(''); setExpandedAnalysis(new Set())
+    setProcessingStep(0)
 
     const formData = new FormData()
     files.forEach(f => formData.append('pdf', f))
@@ -204,20 +436,15 @@ export default function Home() {
 
     try {
       const res = await fetch('/api/process', { method: 'POST', body: formData })
-
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         setErrorMsg(err.error || 'שגיאה בעיבוד. אנא נסה שוב.')
-        setState('error')
-        return
+        setState('error'); return
       }
-
       if (!res.body) throw new Error('no body')
-
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
       let buf = ''
-
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
@@ -241,102 +468,46 @@ export default function Home() {
   const analyzeSingleSection = async (objIdx: number, secIdx: number) => {
     const obj = objections[objIdx]
     const sec = obj.sections[secIdx]
-
-    setObjections(prev => {
-      const updated = [...prev]
-      updated[objIdx].sections[secIdx] = { ...updated[objIdx].sections[secIdx], isAnalyzing: true }
-      return updated
-    })
-
+    setObjections(prev => { const u = [...prev]; u[objIdx].sections[secIdx] = { ...u[objIdx].sections[secIdx], isAnalyzing: true }; return u })
     try {
-      const response = await fetch('/api/process', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'stage3', section_title: sec.section_title, clauses: sec.clauses.map(c => c.text) }),
-      })
-
-      if (!response.ok) throw new Error('Failed to analyze section')
+      const response = await fetch('/api/process', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stage3', section_title: sec.section_title, clauses: sec.clauses.map(c => c.text) }) })
+      if (!response.ok) throw new Error()
       const result = await response.json()
-
       setObjections(prev => {
-        const updated = [...prev]
-        const currentSec = updated[objIdx].sections[secIdx]
-        updated[objIdx].sections[secIdx] = {
-          ...currentSec,
-          section_summary: result.section_summary,
-          section_annex: result.section_annex,
-          confidence: result.confidence,
-          clauses: currentSec.clauses.map((c, i) => ({ ...c, gorem: result.clauses[i]?.gorem || 'אחר' })),
-          isAnalyzing: false,
-        }
-        return updated
+        const u = [...prev]
+        const cs = u[objIdx].sections[secIdx]
+        u[objIdx].sections[secIdx] = { ...cs, section_summary: result.section_summary, section_annex: result.section_annex, confidence: result.confidence, clauses: cs.clauses.map((c, i) => ({ ...c, gorem: result.clauses[i]?.gorem || 'אחר' })), isAnalyzing: false }
+        return u
       })
-
-      // Auto-expand the analysis after analyzing
       const key = `${objIdx}-${secIdx}`
       setExpandedAnalysis(prev => { const n = new Set(prev); n.add(key); return n })
     } catch {
-      setObjections(prev => {
-        const updated = [...prev]
-        updated[objIdx].sections[secIdx] = { ...updated[objIdx].sections[secIdx], isAnalyzing: false }
-        return updated
-      })
+      setObjections(prev => { const u = [...prev]; u[objIdx].sections[secIdx] = { ...u[objIdx].sections[secIdx], isAnalyzing: false }; return u })
     }
   }
 
   const proceedToSummary = async () => {
-    setStage3Loading(true)
-    setErrorMsg('')
-
+    setStage3Loading(true); setErrorMsg('')
     const tasks: Array<{ objIdx: number; secIdx: number; section: SectionItem }> = []
-    objections.forEach((obj, objIdx) => {
-      obj.sections.forEach((sec, secIdx) => {
-        if (!sec.section_summary) tasks.push({ objIdx, secIdx, section: sec })
-      })
-    })
-
+    objections.forEach((obj, objIdx) => obj.sections.forEach((sec, secIdx) => { if (!sec.section_summary) tasks.push({ objIdx, secIdx, section: sec }) }))
     setStage3Progress({ current: 0, total: tasks.length })
-
     const updatedObjections = JSON.parse(JSON.stringify(objections)) as ObjectionItem[]
     let completed = 0
     const batchSize = 3
-
     for (let i = 0; i < tasks.length; i += batchSize) {
       if (i > 0) await new Promise(resolve => setTimeout(resolve, 800))
-
       const batch = tasks.slice(i, i + batchSize)
       await Promise.all(batch.map(async task => {
         try {
-          const response = await fetch('/api/process', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'stage3',
-              section_title: task.section.section_title,
-              clauses: task.section.clauses.map(c => c.text),
-            }),
-          })
+          const response = await fetch('/api/process', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stage3', section_title: task.section.section_title, clauses: task.section.clauses.map(c => c.text) }) })
           if (!response.ok) throw new Error()
           const result = await response.json()
-
-          const currentSec = updatedObjections[task.objIdx].sections[task.secIdx]
-          updatedObjections[task.objIdx].sections[task.secIdx] = {
-            ...currentSec,
-            section_summary: result.section_summary,
-            section_annex: result.section_annex,
-            confidence: result.confidence,
-            clauses: currentSec.clauses.map((c, idx) => ({ ...c, gorem: result.clauses[idx]?.gorem || 'אחר' })),
-          }
+          const cs = updatedObjections[task.objIdx].sections[task.secIdx]
+          updatedObjections[task.objIdx].sections[task.secIdx] = { ...cs, section_summary: result.section_summary, section_annex: result.section_annex, confidence: result.confidence, clauses: cs.clauses.map((c, idx) => ({ ...c, gorem: result.clauses[idx]?.gorem || 'אחר' })) }
           setObjections([...updatedObjections])
         } catch {
-          const currentSec = updatedObjections[task.objIdx].sections[task.secIdx]
-          updatedObjections[task.objIdx].sections[task.secIdx] = {
-            ...currentSec,
-            section_summary: 'שמאות וכלכלה',
-            section_annex: 'שמאות',
-            confidence: 'low',
-            clauses: currentSec.clauses.map(c => ({ ...c, gorem: 'שמאי' })),
-          }
+          const cs = updatedObjections[task.objIdx].sections[task.secIdx]
+          updatedObjections[task.objIdx].sections[task.secIdx] = { ...cs, section_summary: 'שמאות וכלכלה', section_annex: 'שמאות', confidence: 'low', clauses: cs.clauses.map(c => ({ ...c, gorem: 'שמאי' })) }
           setObjections([...updatedObjections])
         } finally {
           completed++
@@ -344,22 +515,10 @@ export default function Home() {
         }
       }))
     }
-
     try {
-      const excelRes = await fetch('/api/process', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'excel',
-          objections: updatedObjections,
-          mode: outputMode,
-          fileName: fileName.trim() || 'התנגדויות_מאוגדות',
-        }),
-      })
-
+      const excelRes = await fetch('/api/process', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'excel', objections: updatedObjections, mode: outputMode, fileName: fileName.trim() || 'התנגדויות_מאוגדות' }) })
       if (!excelRes.ok) throw new Error('שגיאה ביצירת קובץ ה-Excel')
       const excelData = await excelRes.json()
-
       if (excelData.mode === 'merged') {
         const bytes = Uint8Array.from(atob(excelData.file), c => c.charCodeAt(0))
         const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
@@ -372,23 +531,8 @@ export default function Home() {
         })
         setDownloadFiles(dfiles)
       }
-
-      // Save job to history
-      const totalClauses = updatedObjections.reduce(
-        (sum, obj) => sum + obj.sections.reduce((s, sec) => s + sec.clauses.length, 0), 0
-      )
-      fetch('/api/process', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'save_job',
-          file_names: files.map(f => f.name),
-          file_count: files.length,
-          clause_count: totalClauses,
-          result_json: updatedObjections,
-        }),
-      }).catch(() => {})
-
+      const totalClauses = updatedObjections.reduce((sum, obj) => sum + obj.sections.reduce((s, sec) => s + sec.clauses.length, 0), 0)
+      fetch('/api/process', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'save_job', file_names: files.map(f => f.name), file_count: files.length, clause_count: totalClauses, result_json: updatedObjections }) }).catch(() => {})
       setState('done')
     } catch (err: any) {
       setErrorMsg(err.message || 'שגיאה ביצירת קובץ ה-Excel')
@@ -411,45 +555,47 @@ export default function Home() {
     downloadFiles.forEach(f => URL.revokeObjectURL(f.url))
     setFiles([]); setFileName(''); setDownloadFiles([])
     setErrorMsg(''); setLogs([]); setSummary([]); setObjections([])
-    setState('idle'); setFilesOpen(true); setOptionsOpen(false)
-    setShowReportModal(false); setReportSubmitted(false); setExpandedAnalysis(new Set())
+    setState('idle'); setShowReportModal(false); setReportSubmitted(false); setExpandedAnalysis(new Set())
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const totalClausesCount = objections.reduce(
-    (sum, obj) => sum + obj.sections.reduce((s, sec) => s + sec.clauses.length, 0), 0
-  )
+  const totalClausesCount = objections.reduce((sum, obj) => sum + obj.sections.reduce((s, sec) => s + sec.clauses.length, 0), 0)
 
+  if (view === 'landing') {
+    return <LandingPage onEnterApp={() => setView('tool')} />
+  }
+
+  // ── Tool view ──
   return (
-    <main className="min-h-screen bg-slate-50" dir="rtl">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <main style={{ minHeight: 'calc(100vh - 64px)', background: 'var(--parchment)', padding: '40px 24px', direction: 'rtl' }}>
+      <div style={{ maxWidth: 860, margin: '0 auto' }}>
 
-        {/* Page title */}
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-slate-800">עיבוד התנגדויות תכנוניות</h1>
-          <p className="text-slate-500 text-sm mt-0.5">העלה מסמכי PDF של התנגדויות לתכניות בנייה לניתוח והפקת דוח Excel</p>
+        {/* Page header */}
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--navy)', margin: 0, letterSpacing: '-0.5px' }}>עיבוד התנגדויות תכנוניות</h1>
+          <p style={{ fontSize: 14, color: 'var(--muted)', marginTop: 4 }}>העלה מסמכי PDF לניתוח והפקת דוח Excel</p>
         </div>
 
         {/* Main card */}
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm space-y-5 p-6">
+        <div style={{ background: '#fff', border: '1px solid var(--border-warm)', borderRadius: 8, padding: 28, boxShadow: '0 2px 12px rgba(10,22,60,0.06)' }}>
 
           {/* ── IDLE ── */}
           {state === 'idle' && (
-            <>
-              {/* Auth / credits notice */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {/* Auth notice */}
               {isLoaded && !isSignedIn && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-center justify-between gap-4">
-                  <p className="text-blue-800 text-sm font-medium">יש להתחבר כדי לעבד מסמכים</p>
-                  <div className="flex gap-2">
-                    <Link href="/sign-in" className="text-xs font-bold text-blue-700 border border-blue-300 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">כניסה</Link>
-                    <Link href="/sign-up" className="text-xs font-bold text-white bg-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-800 transition-colors">הרשמה</Link>
+                <div style={{ background: 'rgba(10,22,60,0.04)', border: '1px solid var(--border-warm)', borderRadius: 6, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--navy)' }}>יש להתחבר כדי לעבד מסמכים</p>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Link href="/sign-in" style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', border: '1px solid var(--border-warm)', padding: '6px 14px', borderRadius: 4, textDecoration: 'none' }}>כניסה</Link>
+                    <Link href="/sign-up" style={{ fontSize: 13, fontWeight: 700, color: '#fff', background: 'var(--navy)', padding: '6px 14px', borderRadius: 4, textDecoration: 'none' }}>הרשמה</Link>
                   </div>
                 </div>
               )}
-              {isLoaded && isSignedIn && credits !== null && credits === 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-center justify-between gap-4">
-                  <p className="text-amber-800 text-sm font-medium">אין קרדיטים זמינים — יש לרכוש קרדיטים לפני העיבוד</p>
-                  <Link href="/dashboard" className="text-xs font-bold text-amber-800 border border-amber-300 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition-colors whitespace-nowrap">לרכישה</Link>
+              {isLoaded && isSignedIn && credits === 0 && (
+                <div style={{ background: 'rgba(180,140,50,0.06)', border: '1px solid rgba(180,140,50,0.25)', borderRadius: 6, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--navy)' }}>אין קרדיטים זמינים — יש לרכוש קרדיטים לפני העיבוד</p>
+                  <Link href="/dashboard" style={{ fontSize: 13, fontWeight: 700, color: 'var(--brass)', border: '1px solid rgba(180,140,50,0.3)', padding: '6px 14px', borderRadius: 4, textDecoration: 'none', whiteSpace: 'nowrap' as const }}>לרכישה</Link>
                 </div>
               )}
 
@@ -457,265 +603,254 @@ export default function Home() {
               <div
                 onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave}
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors
-                  ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50'}`}
+                style={{
+                  border: `2px dashed ${isDragging ? 'var(--brass)' : 'var(--border-warm)'}`,
+                  borderRadius: 8, padding: '52px 32px', textAlign: 'center', cursor: 'pointer',
+                  background: isDragging ? 'rgba(180,140,50,0.04)' : '#fff',
+                  transition: 'all 0.2s', position: 'relative', overflow: 'hidden',
+                }}
               >
-                <input ref={fileInputRef} type="file" accept=".pdf" multiple onChange={handleInputChange} className="hidden" />
-                <div className="flex justify-center mb-3">
-                  <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
+                {/* Grid texture */}
+                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: 'linear-gradient(var(--border-warm) 1px, transparent 1px), linear-gradient(90deg, var(--border-warm) 1px, transparent 1px)', backgroundSize: '32px 32px', opacity: isDragging ? 0.5 : 0.25, transition: 'opacity 0.2s' }} />
+                <input ref={fileInputRef} type="file" accept=".pdf" multiple onChange={handleInputChange} style={{ display: 'none' }} />
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <div style={{ width: 68, height: 68, borderRadius: 10, background: isDragging ? 'var(--brass)' : 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: isDragging ? '0 8px 24px rgba(180,140,50,0.3)' : '0 4px 16px rgba(10,22,60,0.2)', transition: 'all 0.2s' }}>
+                    <svg width="30" height="30" viewBox="0 0 32 32" fill="none"><path d="M16 20V8M16 8L10 14M16 8l6 6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M6 24h20" stroke="white" strokeWidth="2" strokeLinecap="round" opacity=".5" /></svg>
                   </div>
+                  <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--navy)', margin: '0 0 8px', letterSpacing: '-0.3px' }}>{isDragging ? 'שחרר להעלאה' : 'גרור קבצי PDF לכאן'}</p>
+                  <p style={{ fontSize: 13, color: 'var(--navy)', opacity: 0.5, margin: '0 0 20px' }}>או לחץ לבחירת קבצים · PDF בלבד · עד 50MB לקובץ</p>
+                  <div style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--navy)', color: '#fff', borderRadius: 4, fontSize: 14, fontWeight: 600 }}>בחר קבצי PDF</div>
                 </div>
-                <p className="text-slate-700 font-semibold">גרור קבצי PDF לכאן, או לחץ לבחירה</p>
-                <p className="text-slate-400 text-xs mt-1">PDF בלבד · עד 50MB לקובץ · מספר קבצים בו-זמנית</p>
               </div>
 
               {/* File list */}
               {files.length > 0 && (
-                <CollapsibleSection title="קבצים שנבחרו" badge={String(files.length)} open={filesOpen} onToggle={() => setFilesOpen(v => !v)}>
-                  <div className="divide-y divide-slate-100 max-h-56 overflow-y-auto">
+                <div style={{ border: '1px solid var(--border-warm)', borderRadius: 6, overflow: 'hidden' }}>
+                  <div style={{ padding: '10px 16px', background: '#FAFAF8', borderBottom: '1px solid var(--border-warm)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)' }}>קבצים שנבחרו</span>
+                    <span style={{ fontSize: 12, background: 'rgba(10,22,60,0.07)', color: 'var(--navy)', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>{files.length}</span>
+                  </div>
+                  <div style={{ maxHeight: 200, overflowY: 'auto' }}>
                     {files.map(f => (
-                      <div key={f.name} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50">
-                        <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-red-500 flex-shrink-0">
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                          </svg>
+                      <div key={f.name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: '1px solid var(--border-warm)', background: '#fff' }}>
+                        <div style={{ width: 32, height: 32, background: '#E8302B', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: '#fff', flexShrink: 0 }}>PDF</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{f.name}</p>
+                          <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>{(f.size / 1024 / 1024).toFixed(1)} MB</p>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-700 truncate">{f.name}</p>
-                          <p className="text-xs text-slate-400">{(f.size / 1024 / 1024).toFixed(1)} MB</p>
-                        </div>
-                        <button onClick={e => { e.stopPropagation(); removeFile(f.name) }}
-                          className="w-7 h-7 flex items-center justify-center rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors">
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
+                        <button onClick={e => { e.stopPropagation(); removeFile(f.name) }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 4, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                       </div>
                     ))}
                   </div>
-                </CollapsibleSection>
+                </div>
               )}
 
-              {/* Options */}
+              {/* Output options */}
               {files.length > 0 && (
-                <CollapsibleSection title="הגדרות פלט" open={optionsOpen} onToggle={() => setOptionsOpen(v => !v)}>
-                  <div className="px-5 py-4 space-y-4 bg-slate-50">
+                <div style={{ background: '#FAFAF8', border: '1px solid var(--border-warm)', borderRadius: 6, padding: '16px 20px' }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', marginBottom: 12, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>אופן הפקת הקובץ</p>
+                  <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+                    {(['merged', 'separate'] as OutputMode[]).map(m => (
+                      <button key={m} onClick={() => setOutputMode(m)} style={{ flex: 1, padding: '9px', borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: outputMode === m ? '1.5px solid var(--navy)' : '1.5px solid var(--border-warm)', background: outputMode === m ? 'var(--navy)' : '#fff', color: outputMode === m ? '#fff' : 'var(--navy)', transition: 'all 0.15s' }}>
+                        {m === 'merged' ? 'קובץ אחד מאוחד' : 'קובץ נפרד לכל PDF'}
+                      </button>
+                    ))}
+                  </div>
+                  {outputMode === 'merged' && (
                     <div>
-                      <p className="text-xs font-bold text-slate-500 mb-2">אופן הפקת הקובץ</p>
-                      <div className="flex gap-2">
-                        {(['merged', 'separate'] as OutputMode[]).map(m => (
-                          <button key={m} onClick={() => setOutputMode(m)}
-                            className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold transition-colors border
-                              ${outputMode === m ? 'bg-blue-700 text-white border-blue-700' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}>
-                            {m === 'merged' ? 'קובץ אחד מאוחד' : 'קובץ נפרד לכל PDF'}
-                          </button>
-                        ))}
+                      <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)', marginBottom: 8, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>שם קובץ Excel</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <input type="text" value={fileName} onChange={e => setFileName(e.target.value)} placeholder="התנגדויות_מאוגדות" style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--border-warm)', borderRadius: 4, fontSize: 13, color: 'var(--navy)', fontFamily: 'inherit', outline: 'none', background: '#fff' }} />
+                        <span style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 500 }}>.xlsx</span>
                       </div>
                     </div>
-                    {outputMode === 'merged' && (
-                      <div>
-                        <p className="text-xs font-bold text-slate-500 mb-2">שם קובץ Excel</p>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="text" value={fileName} onChange={e => setFileName(e.target.value)}
-                            placeholder="התנגדויות_מאוגדות"
-                            className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-slate-700 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm"
-                          />
-                          <span className="text-slate-400 text-sm font-medium flex-shrink-0">.xlsx</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CollapsibleSection>
+                  )}
+                </div>
               )}
 
               {/* Process button */}
               {files.length > 0 && (
-                <button onClick={startProcessing}
-                  className="w-full py-4 bg-blue-700 hover:bg-blue-800 text-white font-bold text-base rounded-xl transition-colors shadow-sm">
-                  {files.length === 1 ? 'עבד מסמך' : `עבד ${files.length} מסמכים`}
-                  {' — '}
-                  {outputMode === 'merged' ? 'עבור לבדיקה מקדימה' : 'קבצים נפרדים'}
+                <button onClick={startProcessing} style={{ width: '100%', padding: '14px', background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 4, fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'opacity 0.18s' }}>
+                  {files.length === 1 ? 'עבד מסמך' : `עבד ${files.length} מסמכים`}{' — '}{outputMode === 'merged' ? 'עבור לבדיקה מקדימה' : 'קבצים נפרדים'}
                 </button>
               )}
-            </>
+
+              {/* Trust bar */}
+              <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap', padding: '14px 20px', background: '#FAFAF8', borderRadius: 6, border: '1px solid var(--border-warm)' }}>
+                {[{ icon: '🔒', text: 'הקבצים נמחקים לאחר 24 שעות' }, { icon: '🇮🇱', text: 'שרתים בישראל' }, { icon: '⚡', text: 'פחות מ-20 שניות' }].map((item, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--navy)', opacity: 0.55 }}>
+                    <span>{item.icon}</span>{item.text}
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* ── PROCESSING ── */}
           {state === 'processing' && (
-            <>
-              <div className="flex items-center gap-4 py-4">
-                <div className="relative w-12 h-12 flex-shrink-0">
-                  <div className="w-12 h-12 rounded-full border-4 border-slate-100" />
-                  <div className="w-12 h-12 rounded-full border-4 border-blue-600 border-t-transparent animate-spin absolute inset-0" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {/* File info */}
+              <div style={{ background: '#FAFAF8', border: '1px solid var(--border-warm)', borderRadius: 6, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ width: 40, height: 40, background: '#E8302B', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>PDF</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>{files.length} {files.length === 1 ? 'קובץ' : 'קבצים'} בעיבוד</div>
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{logs.length > 0 ? logs[logs.length - 1] : 'מתחיל עיבוד...'}</div>
                 </div>
-                <div>
-                  <p className="font-bold text-slate-800">מחלץ נתונים ומכין בדיקה מקדימה...</p>
-                  <p className="text-slate-400 text-sm mt-0.5">{logs.length > 0 ? logs[logs.length - 1] : 'מתחיל עיבוד...'}</p>
-                </div>
+                <div className="spinner-brass" />
               </div>
 
-              <CollapsibleSection title="יומן פעולות" open={logsOpen} onToggle={() => setLogsOpen(v => !v)}>
-                <div className="bg-slate-900 p-4 max-h-56 overflow-y-auto" dir="ltr">
-                  <div className="font-mono text-xs text-slate-300 space-y-0.5">
-                    {logs.map((l, i) => (
-                      <div key={i} className={l.includes('✓') ? 'text-green-400' : l.includes('✗') ? 'text-red-400' : ''}>
-                        {l}
+              {/* Step cards */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {PROCESSING_STEPS.map((step, i) => {
+                  const isDone = i < processingStep
+                  const isActive = i === processingStep
+                  const isPending = i > processingStep
+                  return (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 18px', borderRadius: 6, background: isActive ? 'var(--navy)' : '#fff', border: isActive ? '1px solid var(--navy)' : isDone ? '1px solid var(--border-warm)' : '1px solid transparent', opacity: isPending ? 0.38 : 1, transition: 'all 0.35s ease' }}>
+                      <div style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, background: isDone ? 'var(--excel-green-text)' : isActive ? 'rgba(255,255,255,0.15)' : 'var(--border-warm)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: isActive ? '2px solid rgba(255,255,255,0.3)' : 'none', transition: 'all 0.35s' }}>
+                        {isDone ? (
+                          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        ) : (
+                          <span style={{ fontSize: 11, color: isActive ? 'rgba(255,255,255,0.8)' : 'var(--navy)', opacity: 0.5 }}>{i + 1}</span>
+                        )}
                       </div>
-                    ))}
-                    <div ref={logsEndRef} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 14, fontWeight: isActive ? 700 : 500, color: isActive ? '#fff' : 'var(--navy)' }}>{step.label}</div>
+                        {isActive && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>{step.detail}</div>}
+                        {isDone && <div style={{ fontSize: 11, color: 'var(--excel-green-text)', marginTop: 2 }}>הושלם</div>}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Logs (collapsed by default in new design, kept functional) */}
+              <div style={{ border: '1px solid var(--border-warm)', borderRadius: 6, overflow: 'hidden' }}>
+                <button onClick={() => setLogsOpen(v => !v)} style={{ width: '100%', padding: '10px 16px', background: '#FAFAF8', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, fontWeight: 600, color: 'var(--navy)', fontFamily: 'inherit' }}>
+                  <span>יומן פעולות</span>
+                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ transform: logsOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {logsOpen && (
+                  <div style={{ background: '#0F172A', padding: 16, maxHeight: 200, overflowY: 'auto', direction: 'ltr' }}>
+                    <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#CBD5E1', lineHeight: 1.6 }}>
+                      {logs.map((l, i) => (
+                        <div key={i} style={{ color: l.includes('✓') ? '#4ADE80' : l.includes('✗') ? '#F87171' : '#CBD5E1' }}>{l}</div>
+                      ))}
+                      <div ref={logsEndRef} />
+                    </div>
                   </div>
-                </div>
-              </CollapsibleSection>
-            </>
+                )}
+              </div>
+            </div>
           )}
 
           {/* ── PREVIEW ── */}
           {state === 'preview' && (
-            <div className="space-y-5">
-              {/* Header bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-800">בדיקה מקדימה</h2>
-                  <p className="text-slate-500 text-sm mt-0.5">
-                    {objections.length} התנגדויות · {totalClausesCount} סעיפים חולצו · סכם פרקים בודדים או המשך לניתוח מלא
-                  </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 20, borderBottom: '1px solid var(--border-warm)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(21,128,61,0.07)', border: '1px solid rgba(21,128,61,0.2)', borderRadius: 4, padding: '6px 12px' }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--excel-green-text)' }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--excel-green-text)' }}>{objections.length} התנגדויות · {totalClausesCount} סעיפים</span>
+                  </div>
                 </div>
-                <button
-                  disabled={stage3Loading}
-                  onClick={proceedToSummary}
-                  className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-5 py-2.5 rounded-xl shadow-sm transition-colors flex items-center gap-2 flex-shrink-0 disabled:opacity-60"
-                >
-                  {stage3Loading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      מנתח... ({stage3Progress.current}/{stage3Progress.total})
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                      המשך לניתוח מלא
-                    </>
-                  )}
-                </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                  <div>
+                    <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: 0, letterSpacing: '-0.3px' }}>בדיקה מקדימה</h2>
+                    <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>סכם פרקים בודדים או המשך לניתוח מלא</p>
+                  </div>
+                  <button disabled={stage3Loading} onClick={proceedToSummary} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 4, fontSize: 14, fontWeight: 700, cursor: stage3Loading ? 'not-allowed' : 'pointer', opacity: stage3Loading ? 0.6 : 1, fontFamily: 'inherit', flexShrink: 0 }}>
+                    {stage3Loading ? (
+                      <><div className="spinner-brass" style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff' }} />מנתח... ({stage3Progress.current}/{stage3Progress.total})</>
+                    ) : (
+                      <><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>המשך לניתוח מלא</>
+                    )}
+                  </button>
+                </div>
               </div>
 
-              {/* Progress bar */}
               {stage3Loading && (
-                <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2">
-                  <div className="flex justify-between text-sm font-semibold text-slate-700">
+                <div style={{ background: '#FAFAF8', border: '1px solid var(--border-warm)', borderRadius: 6, padding: '14px 18px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 8 }}>
                     <span>מנתח פרקי התנגדות...</span>
                     <span>{Math.round((stage3Progress.current / stage3Progress.total) * 100)}%</span>
                   </div>
-                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                    <div className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${(stage3Progress.current / stage3Progress.total) * 100}%` }} />
+                  <div style={{ background: 'var(--border-warm)', borderRadius: 4, height: 4, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', background: 'var(--brass)', width: `${(stage3Progress.current / stage3Progress.total) * 100}%`, borderRadius: 4, transition: 'width 0.3s' }} />
                   </div>
                 </div>
               )}
 
               {/* Preview table */}
-              <div className="overflow-hidden border border-slate-200 rounded-xl">
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-right text-sm">
+              <div style={{ borderRadius: 6, overflow: 'hidden', border: '1px solid var(--border-warm)', boxShadow: '0 2px 8px rgba(10,22,60,0.06)' }}>
+                <div style={{ background: '#1D6F42', height: 30, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 7 }}>
+                  {['#FF5F57', '#FFBD2E', '#28C840'].map((c, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginRight: 'auto' }}>תצוגה מקדימה</span>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl', fontSize: 13 }}>
                     <thead>
-                      <tr className="bg-slate-50 text-slate-500 font-semibold text-xs border-b border-slate-200">
-                        <th className="px-4 py-3 w-32">פרק / סעיף</th>
-                        <th className="px-4 py-3">מלל ההתנגדות (Verbatim)</th>
-                        <th className="px-4 py-3 w-28 text-center">נותן מענה</th>
-                        <th className="px-4 py-3 w-28 text-center">ניתוח</th>
+                      <tr>
+                        {[
+                          { label: 'פרק / סעיף', green: false },
+                          { label: 'מלל ההתנגדות', green: false },
+                          { label: 'נותן מענה', green: true },
+                          { label: 'ניתוח', green: false },
+                        ].map((col, ci) => (
+                          <th key={ci} style={{ background: col.green ? 'var(--excel-green)' : 'var(--excel-blue)', color: '#fff', padding: '9px 14px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', borderLeft: '1px solid rgba(255,255,255,0.15)', fontSize: 12 }}>{col.label}</th>
+                        ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody>
                       {objections.flatMap((obj, objIdx) =>
                         obj.sections.flatMap((sec, secIdx) => {
                           const analysisKey = `${objIdx}-${secIdx}`
                           const isExpanded = expandedAnalysis.has(analysisKey)
-                          const isLowConf = sec.confidence === 'low'
                           const isWarning = sec.missed_some_clauses
-
                           return sec.clauses.map((clause, clIdx) => {
                             const isFirst = clIdx === 0
                             return (
-                              <tr key={`${objIdx}-${secIdx}-${clIdx}`}
-                                className={`transition-colors hover:bg-slate-50/60
-                                  ${isWarning ? 'bg-amber-50/40 border-r-2 border-amber-300' : ''}`}>
-
-                                {/* Section label */}
-                                <td className="px-4 py-3 align-top">
+                              <tr key={`${objIdx}-${secIdx}-${clIdx}`} style={{ background: (objIdx + secIdx) % 2 === 0 ? '#fff' : '#EBF2F9', borderRight: isWarning ? '3px solid #F59E0B' : 'none' }}>
+                                <td style={{ padding: '10px 14px', borderBottom: '1px solid #DDE8F2', borderLeft: '1px solid #DDE8F2', verticalAlign: 'top', whiteSpace: 'nowrap', minWidth: 120 }}>
                                   {isFirst ? (
-                                    <div className="space-y-1">
-                                      <p className="text-[10px] text-slate-400 truncate max-w-[110px]">{obj.meta.megish || obj.fileName}</p>
-                                      <p className="text-blue-700 font-bold">{sec.section_number}</p>
-                                      <p className="text-[10px] text-slate-500 truncate max-w-[110px]" title={sec.section_title}>{sec.section_title}</p>
-                                      {isWarning && <span className="inline-block bg-amber-100 text-amber-700 text-[9px] px-1.5 py-0.5 rounded font-bold">סריקה חלקית?</span>}
+                                    <div>
+                                      <p style={{ fontSize: 10, color: 'var(--muted)', margin: '0 0 2px' }}>{obj.meta.megish || obj.fileName}</p>
+                                      <p style={{ fontSize: 13, color: 'var(--excel-blue)', fontWeight: 700, margin: 0 }}>{sec.section_number}</p>
+                                      <p style={{ fontSize: 10, color: 'var(--muted)', margin: '2px 0 0', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis' }}>{sec.section_title}</p>
+                                      {isWarning && <span style={{ display: 'inline-block', background: 'rgba(245,158,11,0.1)', color: '#B45309', fontSize: 9, padding: '2px 5px', borderRadius: 2, fontWeight: 700, marginTop: 3 }}>סריקה חלקית?</span>}
                                     </div>
                                   ) : null}
                                 </td>
-
-                                {/* Clause text */}
-                                <td className="px-4 py-3 text-slate-600 whitespace-pre-wrap leading-relaxed align-top">
-                                  {clause.text}
+                                <td style={{ padding: '10px 14px', borderBottom: '1px solid #DDE8F2', borderLeft: '1px solid #DDE8F2', color: '#0F1F3D', lineHeight: 1.55, verticalAlign: 'top' }}>{clause.text}</td>
+                                <td style={{ padding: '10px 14px', borderBottom: '1px solid #DDE8F2', borderLeft: '1px solid #DDE8F2', textAlign: 'center', verticalAlign: 'top', background: 'rgba(29,111,66,0.04)' }}>
+                                  {sec.isAnalyzing ? <span style={{ fontSize: 12, color: 'var(--excel-blue)' }}>מחשב...</span>
+                                    : clause.gorem ? <span style={{ display: 'inline-block', background: 'rgba(29,111,66,0.08)', color: 'var(--excel-green-text)', padding: '3px 8px', borderRadius: 3, fontSize: 12, fontWeight: 600 }}>{clause.gorem}</span>
+                                      : <span style={{ color: 'var(--muted)', fontSize: 12 }}>—</span>}
                                 </td>
-
-                                {/* Gorem */}
-                                <td className="px-4 py-3 text-center align-top">
-                                  {sec.isAnalyzing ? (
-                                    <span className="text-blue-500 text-xs animate-pulse">מחשב...</span>
-                                  ) : clause.gorem ? (
-                                    <span className="inline-block bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs font-semibold">{clause.gorem}</span>
-                                  ) : (
-                                    <span className="text-slate-300 text-xs">—</span>
-                                  )}
-                                </td>
-
-                                {/* Analysis action */}
-                                <td className="px-4 py-3 text-center align-top">
+                                <td style={{ padding: '10px 14px', borderBottom: '1px solid #DDE8F2', textAlign: 'center', verticalAlign: 'top' }}>
                                   {isFirst ? (
-                                    sec.isAnalyzing ? (
-                                      <div className="flex justify-center">
-                                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                      </div>
-                                    ) : sec.section_summary ? (
-                                      <div className="space-y-1">
-                                        {isLowConf && <ConfidenceFlag />}
-                                        <button
-                                          onClick={() => toggleAnalysisExpand(analysisKey)}
-                                          className="text-xs px-2 py-1 border border-slate-200 hover:border-blue-300 text-slate-600 hover:text-blue-700 rounded-lg font-medium transition-colors flex items-center gap-1 mx-auto"
-                                        >
-                                          {isExpanded ? (
-                                            <><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>הסתר</>
-                                          ) : (
-                                            <><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>הצג ניתוח</>
-                                          )}
+                                    sec.isAnalyzing ? <div style={{ width: 16, height: 16, border: '2px solid var(--border-warm)', borderTopColor: 'var(--brass)', borderRadius: '50%', animation: 'spin-brass 0.75s linear infinite', margin: 'auto' }} />
+                                      : sec.section_summary ? (
+                                        <div>
+                                          {sec.confidence === 'low' && <ConfidenceFlag />}
+                                          <button onClick={() => toggleAnalysisExpand(analysisKey)} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '4px 8px', border: '1px solid var(--border-warm)', borderRadius: 4, cursor: 'pointer', background: '#fff', color: 'var(--navy)', fontFamily: 'inherit', margin: 'auto' }}>
+                                            <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                            {isExpanded ? 'הסתר' : 'הצג'}
+                                          </button>
+                                          {isExpanded && <div style={{ background: '#FAFAF8', border: '1px solid var(--border-warm)', borderRadius: 4, padding: '8px 10px', marginTop: 6, textAlign: 'right', width: 140 }}>
+                                            <p style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 700, margin: '0 0 2px' }}>נושא</p>
+                                            <p style={{ fontSize: 12, color: 'var(--navy)', fontWeight: 600, margin: '0 0 6px' }}>{sec.section_summary}</p>
+                                            <p style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 700, margin: '0 0 2px' }}>נספח</p>
+                                            <p style={{ fontSize: 12, color: 'var(--navy)', margin: 0 }}>{sec.section_annex}</p>
+                                          </div>}
+                                        </div>
+                                      ) : (
+                                        <button disabled={stage3Loading} onClick={() => analyzeSingleSection(objIdx, secIdx)} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '4px 10px', border: '1px solid var(--border-warm)', borderRadius: 4, cursor: 'pointer', background: '#fff', color: 'var(--navy)', fontFamily: 'inherit', margin: 'auto', opacity: stage3Loading ? 0.5 : 1 }}>
+                                          נתח פרק
                                         </button>
-                                        {isExpanded && (
-                                          <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-right space-y-1 w-36">
-                                            <p className="text-[10px] text-slate-400 font-semibold">נושא</p>
-                                            <p className="text-xs text-slate-700 font-medium">{sec.section_summary}</p>
-                                            <p className="text-[10px] text-slate-400 font-semibold mt-1">נספח</p>
-                                            <p className="text-xs text-slate-700">{sec.section_annex}</p>
-                                          </div>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <button
-                                        disabled={stage3Loading}
-                                        onClick={() => analyzeSingleSection(objIdx, secIdx)}
-                                        className="text-xs px-2 py-1 border border-slate-200 hover:border-blue-300 bg-white hover:bg-blue-50 text-slate-600 hover:text-blue-700 rounded-lg font-medium transition-colors disabled:opacity-50 mx-auto flex items-center gap-1"
-                                      >
-                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                        </svg>
-                                        נתח פרק
-                                      </button>
-                                    )
+                                      )
                                   ) : null}
                                 </td>
                               </tr>
@@ -725,6 +860,10 @@ export default function Home() {
                       )}
                     </tbody>
                   </table>
+                </div>
+                <div style={{ background: '#1D6F42', padding: '4px 14px', display: 'flex', gap: 20, direction: 'rtl' }}>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)' }}>בדיקה מקדימה</span>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)' }}>{objections.length} התנגדויות</span>
                 </div>
               </div>
             </div>
@@ -732,104 +871,81 @@ export default function Home() {
 
           {/* ── DONE ── */}
           {state === 'done' && (
-            <>
-              <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
-                <div className="w-12 h-12 bg-green-50 border border-green-200 rounded-xl flex items-center justify-center text-green-600 flex-shrink-0">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, paddingBottom: 20, borderBottom: '1px solid var(--border-warm)' }}>
+                <div style={{ width: 48, height: 48, background: 'rgba(21,128,61,0.08)', border: '1px solid rgba(21,128,61,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="22" height="22" fill="none" stroke="var(--excel-green-text)" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">עיבוד הושלם בהצלחה</h2>
-                  <p className="text-slate-500 text-sm mt-0.5">
-                    {summary.length} קבצים · {objections.length} התנגדויות · {totalClausesCount} סעיפים
-                  </p>
+                  <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--navy)', margin: 0, letterSpacing: '-0.3px' }}>עיבוד הושלם בהצלחה</h2>
+                  <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>{summary.length} קבצים · {objections.length} התנגדויות · {totalClausesCount} סעיפים</p>
                 </div>
               </div>
 
               {/* Download */}
               {outputMode === 'merged' && downloadFiles[0] && (
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button onClick={() => triggerDownload(downloadFiles[0].url, downloadFiles[0].name)}
-                    className="flex-1 py-3.5 bg-green-700 hover:bg-green-800 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a2 2 0 002 2h14a2 2 0 002-2v-3" />
-                    </svg>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <button onClick={() => triggerDownload(downloadFiles[0].url, downloadFiles[0].name)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px', background: 'var(--excel-green)', color: '#fff', border: 'none', borderRadius: 4, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', minWidth: 200 }}>
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a2 2 0 002 2h14a2 2 0 002-2v-3" /></svg>
                     הורד Excel מאוחד
-                    <span className="text-green-200 text-sm font-normal">({downloadFiles[0].name})</span>
                   </button>
-                  <button onClick={() => setShowReportModal(true)}
-                    className="py-3.5 px-5 border border-slate-200 hover:border-red-300 text-slate-500 hover:text-red-600 font-semibold text-sm rounded-xl transition-colors flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+                  <button onClick={() => setShowReportModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '13px 18px', background: 'transparent', color: 'var(--muted)', border: '1.5px solid var(--border-warm)', borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                     דווח על שגיאה
                   </button>
                 </div>
               )}
-
               {outputMode === 'separate' && downloadFiles.length > 0 && (
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button onClick={() => downloadFiles.forEach(f => triggerDownload(f.url, f.name))}
-                    className="flex-1 py-3.5 bg-green-700 hover:bg-green-800 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a2 2 0 002 2h14a2 2 0 002-2v-3" />
-                    </svg>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <button onClick={() => downloadFiles.forEach(f => triggerDownload(f.url, f.name))} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px', background: 'var(--excel-green)', color: '#fff', border: 'none', borderRadius: 4, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a2 2 0 002 2h14a2 2 0 002-2v-3" /></svg>
                     הורד {downloadFiles.length} קבצי Excel
                   </button>
-                  <button onClick={() => setShowReportModal(true)}
-                    className="py-3.5 px-5 border border-slate-200 hover:border-red-300 text-slate-500 hover:text-red-600 font-semibold text-sm rounded-xl transition-colors flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+                  <button onClick={() => setShowReportModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '13px 18px', background: 'transparent', color: 'var(--muted)', border: '1.5px solid var(--border-warm)', borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                     דווח על שגיאה
                   </button>
                 </div>
               )}
 
-              {/* Final results table */}
-              <CollapsibleSection title="פרטי ההתנגדויות והסיכומים" badge={`${objections.length} מסמכים`} open={true} onToggle={() => {}}>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-right text-sm">
+              {/* Results table */}
+              <div style={{ borderRadius: 6, overflow: 'hidden', border: '1px solid var(--border-warm)' }}>
+                <div style={{ background: '#1D6F42', height: 30, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 7 }}>
+                  {['#FF5F57', '#FFBD2E', '#28C840'].map((c, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginRight: 'auto' }}>{(fileName.trim() || 'התנגדויות_מאוגדות')}.xlsx — Excel</span>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl', fontSize: 13 }}>
                     <thead>
-                      <tr className="bg-slate-50 text-slate-500 font-semibold text-xs border-b border-slate-200">
-                        <th className="px-4 py-3 w-32">פרק / סעיף</th>
-                        <th className="px-4 py-3">מלל ההתנגדות</th>
-                        <th className="px-4 py-3 w-32">נושא</th>
-                        <th className="px-4 py-3 w-28">נספח</th>
-                        <th className="px-4 py-3 w-28 text-center">נותן מענה</th>
+                      <tr>
+                        {[
+                          { label: 'פרק / סעיף', green: false },
+                          { label: 'מלל ההתנגדות', green: false },
+                          { label: 'נושא', green: false },
+                          { label: 'נספח', green: true },
+                          { label: 'נותן מענה', green: true },
+                        ].map((col, ci) => (
+                          <th key={ci} style={{ background: col.green ? 'var(--excel-green)' : 'var(--excel-blue)', color: '#fff', padding: '9px 14px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', borderLeft: '1px solid rgba(255,255,255,0.15)', fontSize: 12 }}>{col.label}</th>
+                        ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody>
                       {objections.flatMap((obj, objIdx) =>
                         obj.sections.flatMap((sec, secIdx) => {
                           const isLowConf = sec.missed_some_clauses || sec.confidence === 'low'
                           return sec.clauses.map((clause, clIdx) => {
                             const isFirst = clIdx === 0
+                            const ri = objIdx * 100 + secIdx * 10 + clIdx
                             return (
-                              <tr key={`${objIdx}-${secIdx}-${clIdx}`}
-                                className={`transition-colors hover:bg-slate-50/60
-                                  ${isLowConf ? 'bg-amber-50/40 border-r-2 border-amber-300' : ''}`}>
-                                <td className="px-4 py-3 align-top">
-                                  {isFirst ? (
-                                    <div className="space-y-1">
-                                      <p className="text-[10px] text-slate-400 truncate">{obj.meta.megish}</p>
-                                      <p className="text-blue-700 font-bold">{sec.section_number}</p>
-                                      {isLowConf && <ConfidenceFlag />}
-                                    </div>
-                                  ) : null}
+                              <tr key={`${objIdx}-${secIdx}-${clIdx}`} style={{ background: ri % 2 === 0 ? '#fff' : '#EBF2F9', borderRight: isLowConf ? '3px solid #F59E0B' : 'none' }}>
+                                <td style={{ padding: '10px 14px', borderBottom: '1px solid #DDE8F2', borderLeft: '1px solid #DDE8F2', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
+                                  {isFirst ? <div><p style={{ fontSize: 10, color: 'var(--muted)', margin: '0 0 2px' }}>{obj.meta.megish}</p><p style={{ fontSize: 13, fontWeight: 700, color: 'var(--excel-blue)', margin: 0 }}>{sec.section_number}</p>{isLowConf && <ConfidenceFlag />}</div> : null}
                                 </td>
-                                <td className="px-4 py-3 text-slate-600 whitespace-pre-wrap leading-relaxed align-top">{clause.text}</td>
-                                <td className="px-4 py-3 text-slate-800 font-semibold align-top">{isFirst ? sec.section_summary : null}</td>
-                                <td className="px-4 py-3 align-top">
-                                  {isFirst ? (
-                                    <span className="inline-block bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">{sec.section_annex}</span>
-                                  ) : null}
+                                <td style={{ padding: '10px 14px', borderBottom: '1px solid #DDE8F2', borderLeft: '1px solid #DDE8F2', color: '#0F1F3D', lineHeight: 1.55, verticalAlign: 'top' }}>{clause.text}</td>
+                                <td style={{ padding: '10px 14px', borderBottom: '1px solid #DDE8F2', borderLeft: '1px solid #DDE8F2', fontWeight: 600, color: 'var(--navy)', verticalAlign: 'top', whiteSpace: 'nowrap' }}>{isFirst ? sec.section_summary : null}</td>
+                                <td style={{ padding: '10px 14px', borderBottom: '1px solid #DDE8F2', borderLeft: '1px solid #DDE8F2', verticalAlign: 'top', background: 'rgba(29,111,66,0.04)' }}>
+                                  {isFirst ? <span style={{ display: 'inline-block', background: 'rgba(29,111,66,0.08)', color: 'var(--excel-green-text)', padding: '3px 8px', borderRadius: 3, fontSize: 12, fontWeight: 600 }}>{sec.section_annex}</span> : null}
                                 </td>
-                                <td className="px-4 py-3 text-center align-top">
-                                  {clause.gorem ? (
-                                    <span className="inline-block bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs font-semibold">{clause.gorem}</span>
-                                  ) : <span className="text-slate-300 text-xs">—</span>}
+                                <td style={{ padding: '10px 14px', borderBottom: '1px solid #DDE8F2', verticalAlign: 'top', background: 'rgba(29,111,66,0.04)' }}>
+                                  {clause.gorem ? <span style={{ display: 'inline-block', background: 'rgba(29,111,66,0.08)', color: 'var(--excel-green-text)', padding: '3px 8px', borderRadius: 3, fontSize: 12, fontWeight: 600 }}>{clause.gorem}</span> : <span style={{ color: 'var(--muted)', fontSize: 12 }}>—</span>}
                                 </td>
                               </tr>
                             )
@@ -839,85 +955,63 @@ export default function Home() {
                     </tbody>
                   </table>
                 </div>
-              </CollapsibleSection>
+                <div style={{ background: '#1D6F42', padding: '4px 14px', display: 'flex', gap: 20, direction: 'rtl' }}>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)' }}>מוכן</span>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)' }}>{totalClausesCount} רשומות</span>
+                </div>
+              </div>
 
-              <button onClick={reset}
-                className="w-full py-3 border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold rounded-xl transition-colors text-sm">
+              <button onClick={reset} style={{ width: '100%', padding: '12px', background: 'transparent', color: 'var(--navy)', border: '1.5px solid var(--border-warm)', borderRadius: 4, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                 עבד קבצים נוספים
               </button>
-            </>
+            </div>
           )}
 
           {/* ── ERROR ── */}
           {state === 'error' && (
-            <div className="space-y-4 py-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-red-50 border border-red-200 rounded-xl flex items-center justify-center text-red-500 flex-shrink-0">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h2 className="font-bold text-slate-800 mb-1">שגיאה בעיבוד</h2>
-                  <p className="text-red-700 bg-red-50 border border-red-100 rounded-lg px-4 py-3 text-sm">{errorMsg}</p>
-                  {errorMsg.includes('קרדיטים') && (
-                    <Link href="/dashboard" className="mt-2 inline-block text-sm font-semibold text-blue-700 hover:underline">לרכישת קרדיטים ←</Link>
-                  )}
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 16px', gap: 20, textAlign: 'center' }}>
+              <div style={{ width: 68, height: 68, borderRadius: '50%', background: 'rgba(220,38,38,0.07)', border: '2px solid rgba(220,38,38,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><path d="M14 9v6M14 18.5v.5" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round" /><circle cx="14" cy="14" r="11" stroke="#DC2626" strokeWidth="2" /></svg>
               </div>
-              <button onClick={reset}
-                className="w-full py-3 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-xl transition-colors">
-                נסה שוב
-              </button>
+              <div>
+                <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--navy)', margin: '0 0 10px', letterSpacing: '-0.3px' }}>לא הצלחנו לעבד את הקובץ</h2>
+                <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.65, maxWidth: 400, margin: '0 auto 16px' }}>{errorMsg}</p>
+                {errorMsg.includes('קרדיטים') && <Link href="/dashboard" style={{ fontSize: 14, fontWeight: 600, color: 'var(--brass)', textDecoration: 'underline' }}>לרכישת קרדיטים ←</Link>}
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={reset} style={{ padding: '10px 22px', background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 4, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>נסה שוב</button>
+                <button onClick={reset} style={{ padding: '10px 22px', background: 'transparent', color: 'var(--navy)', border: '1.5px solid var(--border-warm)', borderRadius: 4, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>העלה קובץ אחר</button>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-slate-400 text-xs mt-6">
+        <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 12, marginTop: 24 }}>
           הנתונים מעובדים בעזרת Gemini 2.5 Flash ונשמרים בצורה מאובטחת לצורך היסטוריית עבודות
         </p>
       </div>
 
       {/* Report modal */}
       {showReportModal && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50" dir="rtl">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl border border-slate-200">
-            <button onClick={() => { setShowReportModal(false); setReportSubmitted(false) }}
-              className="absolute top-4 left-4 w-7 h-7 rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 transition-colors flex items-center justify-center">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,22,60,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }} dir="rtl">
+          <div style={{ background: '#fff', borderRadius: 8, maxWidth: 440, width: '100%', padding: 28, boxShadow: '0 16px 48px rgba(10,22,60,0.2)', border: '1px solid var(--border-warm)', position: 'relative' }}>
+            <button onClick={() => { setShowReportModal(false); setReportSubmitted(false) }} style={{ position: 'absolute', top: 12, left: 14, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 18, lineHeight: 1 }}>✕</button>
             {!reportSubmitted ? (
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-slate-800">דיווח על שגיאה</h3>
-                <textarea
-                  value={reportText}
-                  onChange={e => setReportText(e.target.value)}
-                  placeholder="תאר את השגיאה שמצאת (למשל: סעיף מסוים לא חולץ נכון, גורם שויך שגוי...)"
-                  className="w-full h-28 border border-slate-200 rounded-xl p-3 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none"
-                />
-                <button
-                  disabled={!reportText.trim() || submittingReport}
-                  onClick={submitErrorReport}
-                  className="w-full py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold rounded-xl transition-colors">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>דיווח על שגיאה</h3>
+                <textarea value={reportText} onChange={e => setReportText(e.target.value)} placeholder="תאר את השגיאה שמצאת..." style={{ width: '100%', height: 110, border: '1px solid var(--border-warm)', borderRadius: 4, padding: '10px 12px', fontSize: 13, color: 'var(--navy)', fontFamily: 'inherit', resize: 'none', outline: 'none', boxSizing: 'border-box' }} />
+                <button disabled={!reportText.trim() || submittingReport} onClick={submitErrorReport} style={{ width: '100%', padding: '11px', background: '#DC2626', color: '#fff', border: 'none', borderRadius: 4, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: !reportText.trim() || submittingReport ? 0.5 : 1 }}>
                   {submittingReport ? 'שולח...' : 'שלח דיווח'}
                 </button>
               </div>
             ) : (
-              <div className="text-center py-4 space-y-3">
-                <div className="w-12 h-12 bg-green-50 border border-green-200 rounded-full flex items-center justify-center text-green-500 mx-auto">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
+              <div style={{ textAlign: 'center', padding: '12px 0' }}>
+                <div style={{ width: 48, height: 48, background: 'rgba(21,128,61,0.08)', border: '1px solid rgba(21,128,61,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <svg width="22" height="22" fill="none" stroke="var(--excel-green-text)" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                 </div>
-                <h3 className="text-lg font-bold text-slate-800">תודה על הדיווח!</h3>
-                <p className="text-slate-500 text-sm">הדיווח נקלט ויסייע לשיפור המערכת.</p>
-                <button onClick={() => setShowReportModal(false)}
-                  className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg transition-colors text-sm">
-                  סגור
-                </button>
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--navy)', margin: '0 0 8px' }}>תודה על הדיווח!</h3>
+                <p style={{ fontSize: 14, color: 'var(--muted)', margin: '0 0 20px' }}>הדיווח נקלט ויסייע לשיפור המערכת.</p>
+                <button onClick={() => setShowReportModal(false)} style={{ padding: '9px 20px', background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 4, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>סגור</button>
               </div>
             )}
           </div>

@@ -2,6 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Heebo', sans-serif;
+:root {
+  --parchment:         oklch(96.5% 0.012 78);
+  --navy:              oklch(17% 0.045 258);
+  --brass:             oklch(65% 0.13 72);
+  --excel-blue:        oklch(38% 0.10 222);
+  --excel-green:       #1D6F42;
+  --excel-green-text:  #15803D;
+  --border-warm:       oklch(88% 0.018 78);
+  --muted:             oklch(58% 0.022 258);
 }
+
+body {
+  font-family: var(--font-heebo), 'Heebo', sans-serif;
+  background: var(--parchment);
+  color: var(--navy);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Spinner */
+@keyframes spin-brass {
+  to { transform: rotate(360deg); }
+}
+.spinner-brass {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid var(--border-warm);
+  border-top-color: var(--brass);
+  border-radius: 50%;
+  animation: spin-brass 0.75s linear infinite;
+}
+
+/* Fade-up animation */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.5s ease both; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-warm); border-radius: 3px; }

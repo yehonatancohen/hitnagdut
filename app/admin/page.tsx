@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useUser } from '@clerk/nextjs'
 
 interface AdminUser {
   id: string
@@ -14,6 +15,7 @@ interface AdminUser {
 }
 
 export default function AdminPage() {
+  const { user: clerkUser } = useUser()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -31,7 +33,7 @@ export default function AdminPage() {
 
   useEffect(() => { fetchUsers() }, [])
 
-  const handleAction = async (userId: string, action: string, amount?: number) => {
+  const handleAction = async (userId: string, action: string, amount?: number | string) => {
     setActionLoading(userId + action)
     await fetch('/api/admin/users', {
       method: 'PATCH',
@@ -47,68 +49,183 @@ export default function AdminPage() {
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
-  if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-500" dir="rtl">טוען...</div>
-  if (error) return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-red-600 font-medium" dir="rtl">{error}</div>
+  if (loading) return (
+    <div style={{ minHeight: '100vh', background: 'var(--parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} dir="rtl">
+      <div className="spinner-brass" />
+    </div>
+  )
+
+  if (error) return (
+    <div style={{ minHeight: '100vh', background: 'var(--parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} dir="rtl">
+      <p style={{ color: '#DC2626', fontWeight: 600 }}>{error}</p>
+    </div>
+  )
 
   return (
-    <main className="min-h-screen bg-slate-50" dir="rtl">
-      <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+    <main style={{ minHeight: '100vh', background: 'var(--parchment)', padding: '40px 0' }} dir="rtl">
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: 28 }}>
 
+        {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">ניהול משתמשים</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{users.length} משתמשים רשומים</p>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--navy)', margin: 0, letterSpacing: '-0.5px' }}>ניהול משתמשים</h1>
+          <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 4 }}>{users.length} משתמשים רשומים</p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <table className="w-full text-sm text-right">
+        {/* Users table */}
+        <div style={{ background: '#fff', border: '1px solid var(--border-warm)', borderRadius: 4, overflow: 'hidden' }}>
+          {/* Excel chrome header */}
+          <div style={{
+            background: 'var(--excel-green)', padding: '5px 12px',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#FF5F57' }} />
+            <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#FEBC2E' }} />
+            <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#28C840' }} />
+            <span style={{ marginRight: 8, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.3px' }}>
+              רשימת משתמשים
+            </span>
+          </div>
+
+          <table style={{ width: '100%', fontSize: 13, textAlign: 'right', borderCollapse: 'collapse' }}>
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-xs">
-                <th className="px-4 py-3">שם / אימייל</th>
-                <th className="px-4 py-3 text-center">תפקיד</th>
-                <th className="px-4 py-3 text-center">קרדיטים</th>
-                <th className="px-4 py-3">תאריך הצטרפות</th>
-                <th className="px-4 py-3 text-center">סטטוס</th>
-                <th className="px-4 py-3 text-center">פעולות</th>
+              <tr style={{ borderBottom: '1px solid var(--border-warm)' }}>
+                {[
+                  { label: 'שם / אימייל', align: 'right' },
+                  { label: 'תפקיד', align: 'center' },
+                  { label: 'קרדיטים', align: 'center' },
+                  { label: 'תאריך הצטרפות', align: 'right' },
+                  { label: 'סטטוס', align: 'center' },
+                  { label: 'פעולות', align: 'center' },
+                ].map((col, i) => (
+                  <th key={col.label} style={{
+                    padding: '10px 16px', fontSize: 11, fontWeight: 700,
+                    color: '#fff', letterSpacing: '0.5px', textTransform: 'uppercase',
+                    background: i === 0 ? 'var(--navy)' : 'var(--excel-blue)',
+                    textAlign: col.align as any,
+                  }}>
+                    {col.label}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {users.map(user => (
-                <tr key={user.id} className={`hover:bg-slate-50 transition-colors ${user.is_blocked ? 'opacity-60' : ''}`}>
-                  <td className="px-4 py-3">
-                    <p className="font-semibold text-slate-800">{user.name || '—'}</p>
-                    <p className="text-slate-400 text-xs">{user.email || user.clerk_id}</p>
+            <tbody>
+              {users.map((user, idx) => (
+                <tr
+                  key={user.id}
+                  style={{
+                    borderBottom: '1px solid var(--border-warm)',
+                    background: user.is_blocked
+                      ? 'rgba(220,38,38,0.04)'
+                      : idx % 2 === 1 ? 'rgba(245,240,232,0.4)' : '#fff',
+                    opacity: user.is_blocked ? 0.7 : 1,
+                  }}
+                >
+                  <td style={{ padding: '10px 16px' }}>
+                    <p style={{ fontWeight: 700, color: 'var(--navy)', margin: 0 }}>{user.name || '—'}</p>
+                    <p style={{ color: 'var(--muted)', fontSize: 11, marginTop: 2 }}>{user.email || user.clerk_id}</p>
                   </td>
-                  <td className="px-4 py-3 text-center">
+
+                  <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                     {user.role === 'admin' ? (
-                      <span className="bg-purple-50 text-purple-700 text-xs font-bold px-2 py-0.5 rounded-full">מנהל</span>
+                      <span style={{
+                        display: 'inline-block', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 4,
+                        background: 'rgba(124,58,237,0.1)', color: '#7c3aed',
+                        border: '1px solid rgba(124,58,237,0.2)',
+                      }}>
+                        מנהל
+                      </span>
                     ) : (
-                      <span className="bg-slate-100 text-slate-500 text-xs font-medium px-2 py-0.5 rounded-full">משתמש</span>
+                      <span style={{
+                        display: 'inline-block', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 4,
+                        background: 'rgba(180,140,50,0.08)', color: 'var(--muted)',
+                        border: '1px solid var(--border-warm)',
+                      }}>
+                        משתמש
+                      </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="font-bold text-slate-700">{user.credits_remaining}</span>
+
+                  <td style={{ padding: '10px 16px', textAlign: 'center', fontWeight: 700, color: 'var(--navy)' }}>
+                    {user.credits_remaining}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{formatDate(user.created_at)}</td>
-                  <td className="px-4 py-3 text-center">
+
+                  <td style={{ padding: '10px 16px', color: 'var(--muted)' }}>{formatDate(user.created_at)}</td>
+
+                  <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                     {user.is_blocked ? (
-                      <span className="bg-red-50 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">חסום</span>
+                      <span style={{
+                        display: 'inline-block', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 4,
+                        background: 'rgba(220,38,38,0.08)', color: '#DC2626',
+                        border: '1px solid rgba(220,38,38,0.2)',
+                      }}>
+                        חסום
+                      </span>
                     ) : (
-                      <span className="bg-green-50 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">פעיל</span>
+                      <span style={{
+                        display: 'inline-block', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 4,
+                        background: 'rgba(29,111,66,0.1)', color: 'var(--excel-green-text)',
+                        border: '1px solid rgba(29,111,66,0.2)',
+                      }}>
+                        פעיל
+                      </span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-center gap-2">
+
+                  <td style={{ padding: '10px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      {/* Add credits */}
                       <button
                         onClick={() => setAddCreditsModal({ userId: user.id, name: user.name || user.email || '' })}
-                        className="text-xs px-2.5 py-1 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors font-medium"
+                        style={{
+                          fontSize: 12, padding: '4px 10px', borderRadius: 4, cursor: 'pointer',
+                          border: '1px solid var(--border-warm)', background: '#fff', color: 'var(--navy)',
+                          fontWeight: 600, transition: 'background 0.15s',
+                        }}
                       >
                         + קרדיטים
                       </button>
+
+                      {/* Role toggle */}
+                      {user.role === 'admin' ? (
+                        <button
+                          onClick={() => handleAction(user.id, 'set_role', 'user' as any)}
+                          disabled={actionLoading === user.id + 'set_role' || user.clerk_id === clerkUser?.id}
+                          title={user.clerk_id === clerkUser?.id ? 'לא ניתן להסיר הרשאת מנהל מעצמך' : ''}
+                          style={{
+                            fontSize: 12, padding: '4px 10px', borderRadius: 4, cursor: 'pointer',
+                            border: '1px solid rgba(124,58,237,0.3)', background: '#fff', color: '#7c3aed',
+                            fontWeight: 600, transition: 'background 0.15s',
+                            opacity: (actionLoading === user.id + 'set_role' || user.clerk_id === clerkUser?.id) ? 0.4 : 1,
+                          }}
+                        >
+                          {actionLoading === user.id + 'set_role' ? '...' : 'הסר מנהל'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAction(user.id, 'set_role', 'admin' as any)}
+                          disabled={actionLoading === user.id + 'set_role'}
+                          style={{
+                            fontSize: 12, padding: '4px 10px', borderRadius: 4, cursor: 'pointer',
+                            border: '1px solid rgba(124,58,237,0.3)', background: '#fff', color: '#7c3aed',
+                            fontWeight: 600, transition: 'background 0.15s',
+                            opacity: actionLoading === user.id + 'set_role' ? 0.4 : 1,
+                          }}
+                        >
+                          {actionLoading === user.id + 'set_role' ? '...' : 'הפוך למנהל'}
+                        </button>
+                      )}
+
+                      {/* Block/unblock */}
                       {user.is_blocked ? (
                         <button
                           onClick={() => handleAction(user.id, 'unblock')}
                           disabled={actionLoading === user.id + 'unblock'}
-                          className="text-xs px-2.5 py-1 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors font-medium disabled:opacity-50"
+                          style={{
+                            fontSize: 12, padding: '4px 10px', borderRadius: 4, cursor: 'pointer',
+                            border: '1px solid rgba(29,111,66,0.3)', background: '#fff', color: 'var(--excel-green-text)',
+                            fontWeight: 600, transition: 'background 0.15s',
+                            opacity: actionLoading === user.id + 'unblock' ? 0.5 : 1,
+                          }}
                         >
                           {actionLoading === user.id + 'unblock' ? '...' : 'בטל חסימה'}
                         </button>
@@ -116,7 +233,12 @@ export default function AdminPage() {
                         <button
                           onClick={() => handleAction(user.id, 'block')}
                           disabled={actionLoading === user.id + 'block'}
-                          className="text-xs px-2.5 py-1 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium disabled:opacity-50"
+                          style={{
+                            fontSize: 12, padding: '4px 10px', borderRadius: 4, cursor: 'pointer',
+                            border: '1px solid rgba(220,38,38,0.3)', background: '#fff', color: '#DC2626',
+                            fontWeight: 600, transition: 'background 0.15s',
+                            opacity: actionLoading === user.id + 'block' ? 0.5 : 1,
+                          }}
                         >
                           {actionLoading === user.id + 'block' ? '...' : 'חסום'}
                         </button>
@@ -127,34 +249,77 @@ export default function AdminPage() {
               ))}
             </tbody>
           </table>
+
+          {/* Excel status bar */}
+          <div style={{
+            padding: '6px 16px', background: 'var(--excel-green)',
+            display: 'flex', alignItems: 'center', gap: 16,
+          }}>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', fontWeight: 500 }}>
+              סה"כ {users.length} משתמשים | {users.filter(u => u.role === 'admin').length} מנהלים | {users.filter(u => u.is_blocked).length} חסומים
+            </span>
+          </div>
         </div>
 
       </div>
 
       {/* Add credits modal */}
       {addCreditsModal && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4" dir="rtl">
-          <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl border border-slate-200 space-y-4">
-            <h3 className="font-bold text-slate-800">הוסף קרדיטים ל-{addCreditsModal.name}</h3>
+        <div
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(10,22,60,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16,
+          }}
+          dir="rtl"
+        >
+          <div style={{
+            background: '#fff', borderRadius: 4, padding: 28,
+            maxWidth: 360, width: '100%',
+            boxShadow: '0 20px 48px rgba(10,22,60,0.2)',
+            border: '1px solid var(--border-warm)',
+            display: 'flex', flexDirection: 'column', gap: 16,
+          }}>
+            <h3 style={{ fontWeight: 800, color: 'var(--navy)', fontSize: 17, margin: 0 }}>
+              הוסף קרדיטים ל-{addCreditsModal.name}
+            </h3>
             <input
               type="number"
               value={creditsAmount}
               onChange={e => setCreditsAmount(e.target.value)}
               placeholder="מספר קרדיטים"
               min="1"
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+              style={{
+                width: '100%', padding: '10px 14px',
+                border: '1px solid var(--border-warm)', borderRadius: 4,
+                color: 'var(--navy)', fontSize: 14,
+                outline: 'none', boxSizing: 'border-box',
+                fontFamily: 'inherit',
+              }}
             />
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: 10 }}>
               <button
                 onClick={() => handleAction(addCreditsModal.userId, 'add_credits', Number(creditsAmount))}
                 disabled={!creditsAmount || Number(creditsAmount) <= 0}
-                className="flex-1 py-2 bg-blue-700 text-white font-bold text-sm rounded-lg hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                style={{
+                  flex: 1, padding: '10px 0',
+                  background: 'var(--navy)', color: '#fff',
+                  fontWeight: 700, fontSize: 14, borderRadius: 4,
+                  border: 'none', cursor: 'pointer',
+                  opacity: (!creditsAmount || Number(creditsAmount) <= 0) ? 0.5 : 1,
+                  transition: 'opacity 0.15s',
+                }}
               >
                 הוסף
               </button>
               <button
                 onClick={() => { setAddCreditsModal(null); setCreditsAmount('') }}
-                className="flex-1 py-2 border border-slate-200 text-slate-600 font-semibold text-sm rounded-lg hover:bg-slate-50 transition-colors"
+                style={{
+                  flex: 1, padding: '10px 0',
+                  background: '#fff', color: 'var(--navy)',
+                  fontWeight: 600, fontSize: 14, borderRadius: 4,
+                  border: '1px solid var(--border-warm)', cursor: 'pointer',
+                  transition: 'background 0.15s',
+                }}
               >
                 ביטול
               </button>

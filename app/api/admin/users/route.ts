@@ -46,6 +46,14 @@ export async function PATCH(req: Request) {
     await supabaseAdmin
       .from('user_credits')
       .upsert({ user_id, credits_remaining: current + amount, updated_at: new Date().toISOString() })
+  } else if (action === 'set_role' && (amount === 'admin' || amount === 'user')) {
+    // Prevent self-demotion
+    const { data: self } = await supabaseAdmin
+      .from('users').select('id').eq('clerk_id', userId).single()
+    if (self?.id === user_id && amount !== 'admin') {
+      return Response.json({ error: 'Cannot remove your own admin role' }, { status: 400 })
+    }
+    await supabaseAdmin.from('users').update({ role: amount }).eq('id', user_id)
   } else {
     return Response.json({ error: 'Invalid action' }, { status: 400 })
   }

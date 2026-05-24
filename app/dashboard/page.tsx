@@ -14,9 +14,9 @@ interface Job {
 }
 
 const PLANS = [
-  { key: 'single',     label: 'עבודה בודדת',          credits: 1,  price: '29 ₪' },
-  { key: 'bundle_10',  label: '10 עבודות',             credits: 10, price: '199 ₪',  badge: 'חיסכון 20%' },
-  { key: 'monthly_50', label: 'מנוי חודשי – 50 עבודות', credits: 50, price: '399 ₪/חודש', badge: 'משתלם ביותר' },
+  { key: 'single',     label: 'עבודה בודדת',            credits: 1,  price: '29 ₪',        badge: null },
+  { key: 'bundle_10',  label: '10 עבודות',               credits: 10, price: '199 ₪',       badge: 'חיסכון 20%' },
+  { key: 'monthly_50', label: 'מנוי חודשי – 50 עבודות', credits: 50, price: '399 ₪/חודש',  badge: 'משתלם ביותר' },
 ]
 
 export default function DashboardPage() {
@@ -29,13 +29,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/credits').then(r => r.json()),
-      fetch('/api/jobs').then(r => r.json()),
+      fetch('/api/credits').then(r => r.ok ? r.json() : null),
+      fetch('/api/jobs').then(r => r.ok ? r.json() : null),
     ]).then(([cData, jData]) => {
-      setCredits(cData.credits ?? 0)
-      setJobs(jData.jobs ?? [])
+      setCredits(cData?.credits ?? 0)
+      setJobs(jData?.jobs ?? [])
       setLoading(false)
-    })
+    }).catch(() => setLoading(false))
   }, [])
 
   const handlePurchase = async (planKey: string) => {
@@ -61,104 +61,199 @@ export default function DashboardPage() {
     new Date(iso).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   return (
-    <main className="min-h-screen bg-slate-50" dir="rtl">
-      <div className="max-w-4xl mx-auto px-6 py-10 space-y-10">
+    <main style={{ minHeight: '100vh', background: 'var(--parchment)', padding: '40px 0' }} dir="rtl">
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: 32 }}>
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">דשבורד</h1>
-            <p className="text-slate-500 text-sm mt-0.5">{user?.fullName || user?.emailAddresses[0]?.emailAddress}</p>
+            <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--navy)', margin: 0, letterSpacing: '-0.5px' }}>דשבורד</h1>
+            <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 4 }}>
+              {user?.fullName || user?.emailAddresses[0]?.emailAddress}
+            </p>
           </div>
-          <Link href="/" className="px-4 py-2 bg-blue-700 text-white text-sm font-semibold rounded-lg hover:bg-blue-800 transition-colors">
-            + עבודה חדשה
+          <Link href="/" style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'var(--navy)', color: '#fff',
+            fontSize: 14, fontWeight: 700, padding: '9px 18px',
+            borderRadius: 4, textDecoration: 'none', transition: 'opacity 0.15s',
+          }}>
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+            </svg>
+            עבודה חדשה
           </Link>
         </div>
 
-        {/* Credits summary */}
-        <div className="bg-white border border-slate-200 rounded-xl p-6 flex items-center justify-between">
+        {/* Credits card */}
+        <div style={{
+          background: '#fff', border: '1px solid var(--border-warm)', borderRadius: 4,
+          padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
           <div>
-            <p className="text-sm text-slate-500 font-medium mb-1">קרדיטים זמינים</p>
-            <p className="text-4xl font-bold text-slate-800">
-              {loading ? '—' : credits}
-              <span className="text-base font-normal text-slate-400 mr-2">עבודות</span>
+            <p style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              קרדיטים זמינים
             </p>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ fontSize: 48, fontWeight: 800, color: 'var(--navy)', lineHeight: 1 }}>
+                {loading ? '—' : credits}
+              </span>
+              <span style={{ fontSize: 16, color: 'var(--muted)', fontWeight: 500 }}>עבודות</span>
+            </div>
           </div>
-          <div className="w-16 h-16 bg-blue-50 rounded-xl flex items-center justify-center">
-            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+          <div style={{
+            width: 56, height: 56, borderRadius: 4,
+            background: 'rgba(180,140,50,0.1)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="26" height="26" fill="none" stroke="var(--brass)" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
         </div>
 
         {/* Plans */}
         <section>
-          <h2 className="text-lg font-bold text-slate-700 mb-4">רכישת קרדיטים</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--navy)', marginBottom: 16 }}>רכישת קרדיטים</h2>
+
           {purchaseMsg && (
-            <div className="mb-4 bg-green-50 border border-green-200 text-green-800 text-sm font-medium px-4 py-3 rounded-lg">{purchaseMsg}</div>
+            <div style={{
+              marginBottom: 16, background: 'rgba(29,111,66,0.08)', border: '1px solid rgba(29,111,66,0.2)',
+              color: 'var(--excel-green-text)', fontSize: 14, fontWeight: 600, padding: '10px 16px', borderRadius: 4,
+            }}>
+              {purchaseMsg}
+            </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
             {PLANS.map(plan => (
-              <div key={plan.key} className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col gap-4 relative">
+              <div key={plan.key} style={{
+                background: '#fff', border: '1px solid var(--border-warm)', borderRadius: 4,
+                padding: 20, display: 'flex', flexDirection: 'column', gap: 16, position: 'relative',
+              }}>
                 {plan.badge && (
-                  <span className="absolute top-3 left-3 bg-blue-700 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">{plan.badge}</span>
+                  <span style={{
+                    position: 'absolute', top: 12, left: 12,
+                    background: 'var(--navy)', color: '#fff',
+                    fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 4,
+                  }}>
+                    {plan.badge}
+                  </span>
                 )}
                 <div>
-                  <p className="font-bold text-slate-800 text-base">{plan.label}</p>
-                  <p className="text-2xl font-bold text-blue-700 mt-1">{plan.price}</p>
-                  <p className="text-xs text-slate-400 mt-1">{plan.credits} קרדיטים</p>
+                  <p style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 15, marginBottom: 6 }}>{plan.label}</p>
+                  <p style={{ fontSize: 26, fontWeight: 800, color: 'var(--brass)', lineHeight: 1 }}>{plan.price}</p>
+                  <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>{plan.credits} קרדיטים</p>
                 </div>
                 <button
                   onClick={() => handlePurchase(plan.key)}
                   disabled={purchasing === plan.key}
-                  className="w-full py-2.5 bg-blue-700 hover:bg-blue-800 disabled:opacity-60 text-white font-bold text-sm rounded-lg transition-colors"
+                  style={{
+                    width: '100%', padding: '10px 0',
+                    background: purchasing === plan.key ? 'var(--muted)' : 'var(--navy)',
+                    color: '#fff', fontWeight: 700, fontSize: 14,
+                    borderRadius: 4, border: 'none', cursor: purchasing === plan.key ? 'default' : 'pointer',
+                    transition: 'opacity 0.15s', opacity: purchasing === plan.key ? 0.6 : 1,
+                  }}
                 >
                   {purchasing === plan.key ? 'מעבד...' : 'רכוש עכשיו'}
                 </button>
               </div>
             ))}
           </div>
-          <p className="text-xs text-slate-400 mt-3">
+
+          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 12 }}>
             * שילוב עם ספק תשלומים ייקבע בהמשך. כרגע הרכישה מדמה הוספת קרדיטים ישירות.
           </p>
         </section>
 
         {/* Job history */}
         <section>
-          <h2 className="text-lg font-bold text-slate-700 mb-4">היסטוריית עבודות</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--navy)', marginBottom: 16 }}>היסטוריית עבודות</h2>
+
           {loading ? (
-            <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400 text-sm">טוען...</div>
+            <div style={{
+              background: '#fff', border: '1px solid var(--border-warm)', borderRadius: 4,
+              padding: 32, textAlign: 'center', color: 'var(--muted)', fontSize: 14,
+            }}>
+              טוען...
+            </div>
           ) : jobs.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400 text-sm">
-              עדיין לא בוצעו עבודות. <Link href="/" className="text-blue-600 hover:underline">התחל עכשיו</Link>
+            <div style={{
+              background: '#fff', border: '1px solid var(--border-warm)', borderRadius: 4,
+              padding: 40, textAlign: 'center',
+            }}>
+              <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 12 }}>עדיין לא בוצעו עבודות.</p>
+              <Link href="/" style={{
+                display: 'inline-block', background: 'var(--navy)', color: '#fff',
+                fontSize: 14, fontWeight: 700, padding: '8px 20px', borderRadius: 4, textDecoration: 'none',
+              }}>
+                התחל עכשיו
+              </Link>
             </div>
           ) : (
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-              <table className="w-full text-sm text-right">
+            <div style={{ background: '#fff', border: '1px solid var(--border-warm)', borderRadius: 4, overflow: 'hidden' }}>
+              {/* Excel chrome header */}
+              <div style={{
+                background: 'var(--excel-green)', padding: '5px 12px',
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}>
+                <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#FF5F57' }} />
+                <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#FEBC2E' }} />
+                <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#28C840' }} />
+                <span style={{ marginRight: 8, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.3px' }}>
+                  היסטוריית עבודות
+                </span>
+              </div>
+              <table style={{ width: '100%', fontSize: 13, textAlign: 'right', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-xs">
-                    <th className="px-4 py-3">תאריך</th>
-                    <th className="px-4 py-3">קבצים</th>
-                    <th className="px-4 py-3 text-center">סעיפים</th>
-                    <th className="px-4 py-3 text-center">סטטוס</th>
+                  <tr style={{ borderBottom: '1px solid var(--border-warm)' }}>
+                    {['תאריך', 'קבצים', 'סעיפים', 'סטטוס'].map((h, i) => (
+                      <th key={h} style={{
+                        padding: '10px 16px', fontSize: 11, fontWeight: 700,
+                        color: '#fff', letterSpacing: '0.5px', textTransform: 'uppercase',
+                        background: i === 0 ? 'var(--navy)' : 'var(--excel-blue)',
+                        textAlign: i >= 2 ? 'center' : 'right',
+                      }}>
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {jobs.map(job => (
-                    <tr key={job.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{formatDate(job.created_at)}</td>
-                      <td className="px-4 py-3 text-slate-700 font-medium">
+                <tbody>
+                  {jobs.map((job, idx) => (
+                    <tr key={job.id} style={{
+                      borderBottom: '1px solid var(--border-warm)',
+                      background: idx % 2 === 1 ? 'rgba(245,240,232,0.4)' : '#fff',
+                    }}>
+                      <td style={{ padding: '10px 16px', color: 'var(--muted)', whiteSpace: 'nowrap' }}>{formatDate(job.created_at)}</td>
+                      <td style={{ padding: '10px 16px', color: 'var(--navy)', fontWeight: 600 }}>
                         {job.file_names.slice(0, 2).join(', ')}
-                        {job.file_names.length > 2 && <span className="text-slate-400"> +{job.file_names.length - 2}</span>}
+                        {job.file_names.length > 2 && (
+                          <span style={{ color: 'var(--muted)', fontWeight: 400 }}> +{job.file_names.length - 2}</span>
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-center text-slate-600">{job.clause_count}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="inline-block bg-green-50 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">הושלם</span>
+                      <td style={{ padding: '10px 16px', textAlign: 'center', color: 'var(--navy)', fontWeight: 700 }}>{job.clause_count}</td>
+                      <td style={{ padding: '10px 16px', textAlign: 'center' }}>
+                        <span style={{
+                          display: 'inline-block', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 4,
+                          background: 'rgba(29,111,66,0.1)', color: 'var(--excel-green-text)',
+                          border: '1px solid rgba(29,111,66,0.2)',
+                        }}>
+                          הושלם
+                        </span>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              <div style={{
+                padding: '6px 16px', background: 'var(--excel-green)', display: 'flex', alignItems: 'center', gap: 16,
+              }}>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', fontWeight: 500 }}>
+                  סה"כ {jobs.length} עבודות | {jobs.reduce((s, j) => s + j.clause_count, 0)} סעיפים עובדו
+                </span>
+              </div>
             </div>
           )}
         </section>
