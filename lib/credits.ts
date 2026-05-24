@@ -1,5 +1,34 @@
 import { supabaseAdmin } from './supabase'
 
+// Creates the user + credits row if they don't exist yet.
+// Call this at the start of any authenticated API route instead of relying on the webhook.
+export async function ensureUser(
+  clerkId: string,
+  profile?: { email?: string | null; name?: string | null }
+): Promise<string> {
+  const { data: existing } = await supabaseAdmin
+    .from('users')
+    .select('id')
+    .eq('clerk_id', clerkId)
+    .single()
+
+  if (existing) return existing.id
+
+  const { data: created, error } = await supabaseAdmin
+    .from('users')
+    .insert({ clerk_id: clerkId, email: profile?.email ?? null, name: profile?.name ?? null })
+    .select('id')
+    .single()
+
+  if (error || !created) throw new Error('Failed to create user: ' + error?.message)
+
+  await supabaseAdmin
+    .from('user_credits')
+    .insert({ user_id: created.id, credits_remaining: 0 })
+
+  return created.id
+}
+
 export async function getCredits(clerkId: string): Promise<number> {
   const { data: user } = await supabaseAdmin
     .from('users')

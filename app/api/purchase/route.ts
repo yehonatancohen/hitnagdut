@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
-import { addCredits } from '@/lib/credits'
+import { addCredits, ensureUser } from '@/lib/credits'
 import { supabaseAdmin } from '@/lib/supabase'
 
 const PLANS = {
@@ -18,6 +18,8 @@ export async function POST(req: Request) {
   const plan = body.plan as PlanKey
 
   if (!PLANS[plan]) return Response.json({ error: 'Invalid plan' }, { status: 400 })
+
+  await ensureUser(userId)
 
   const { credits, price_ils } = PLANS[plan]
 

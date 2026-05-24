@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { runStage1, runStage2, runStage3ForSection, generateExcel } from '@/lib/pipeline'
-import { getCredits, deductCredit, isUserBlocked } from '@/lib/credits'
+import { getCredits, deductCredit, isUserBlocked, ensureUser } from '@/lib/credits'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const maxDuration = 300
@@ -59,6 +59,9 @@ export async function POST(req: NextRequest) {
   }
 
   // ── SSE Stage 1 & 2 (FormData) ──────────────────────────────────────────────
+
+  // Ensure user row exists (lazy creation — no webhook needed)
+  await ensureUser(userId)
 
   // Auth checks before starting an expensive job
   const blocked = await isUserBlocked(userId)
