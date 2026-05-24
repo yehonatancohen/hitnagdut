@@ -14,8 +14,9 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    '/((?!_next|.*\\..*).*))',
-    '/(api|trpc)(.*)',
+    // Skip static files, _next internals, and the large-upload API route
+    '/((?!_next|.*\\..*)(?!api/process).*)',
+    '/(api(?!/process)|trpc)(.*)',
     '/__clerk/(.*)',
   ],
 }

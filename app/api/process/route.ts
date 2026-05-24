@@ -5,6 +5,7 @@ import { getCredits, deductCredit, isUserBlocked, ensureUser } from '@/lib/credi
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const maxDuration = 300
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
