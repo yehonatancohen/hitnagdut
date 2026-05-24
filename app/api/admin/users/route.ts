@@ -43,9 +43,16 @@ export async function PATCH(req: Request) {
     const { data: uc } = await supabaseAdmin
       .from('user_credits').select('credits_remaining').eq('user_id', user_id).single()
     const current = uc?.credits_remaining ?? 0
-    await supabaseAdmin
-      .from('user_credits')
-      .upsert({ user_id, credits_remaining: current + amount, updated_at: new Date().toISOString() })
+    if (uc) {
+      await supabaseAdmin
+        .from('user_credits')
+        .update({ credits_remaining: current + amount, updated_at: new Date().toISOString() })
+        .eq('user_id', user_id)
+    } else {
+      await supabaseAdmin
+        .from('user_credits')
+        .insert({ user_id, credits_remaining: amount })
+    }
   } else if (action === 'set_role' && (amount === 'admin' || amount === 'user')) {
     // Prevent self-demotion
     const { data: self } = await supabaseAdmin

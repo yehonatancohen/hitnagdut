@@ -132,7 +132,7 @@ export default function DashboardPage() {
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          <div className="plans-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
             {PLANS.map(plan => (
               <div key={plan.key} style={{
                 background: '#fff', border: '1px solid var(--border-warm)', borderRadius: 4,
@@ -161,9 +161,19 @@ export default function DashboardPage() {
                     color: '#fff', fontWeight: 700, fontSize: 14,
                     borderRadius: 4, border: 'none', cursor: purchasing === plan.key ? 'default' : 'pointer',
                     transition: 'opacity 0.15s', opacity: purchasing === plan.key ? 0.6 : 1,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   }}
                 >
-                  {purchasing === plan.key ? 'מעבד...' : 'רכוש עכשיו'}
+                  {purchasing === plan.key ? (
+                    <>
+                      <span style={{
+                        width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)',
+                        borderTopColor: '#fff', borderRadius: '50%',
+                        animation: 'spin-brass 0.75s linear infinite', display: 'inline-block',
+                      }} />
+                      מעבד...
+                    </>
+                  ) : 'רכוש עכשיו'}
                 </button>
               </div>
             ))}
@@ -212,7 +222,8 @@ export default function DashboardPage() {
                   היסטוריית עבודות
                 </span>
               </div>
-              <table style={{ width: '100%', fontSize: 13, textAlign: 'right', borderCollapse: 'collapse' }}>
+              <div className="table-scroll">
+              <table style={{ width: '100%', minWidth: 500, fontSize: 13, textAlign: 'right', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-warm)' }}>
                     {['תאריך', 'קבצים', 'סעיפים', 'סטטוס'].map((h, i) => (
@@ -254,6 +265,7 @@ export default function DashboardPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
               <div style={{
                 padding: '6px 16px', background: 'var(--excel-green)', display: 'flex', alignItems: 'center', gap: 16,
               }}>
