@@ -52,15 +52,16 @@ export default function SignInPage() {
     >
       {/* Logo + heading */}
       <div style={{ marginBottom: 28, textAlign: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 10 }}>
-          <div style={{
-            width: 40, height: 40, background: 'var(--brass)', borderRadius: 4,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 900, fontSize: 22, color: '#fff', letterSpacing: '-1px',
-          }}>
-            נ
-          </div>
-          <span style={{ fontWeight: 800, fontSize: 24, color: 'var(--navy)', letterSpacing: '-0.5px' }}>נוסח</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+          <img
+            src="/logo.png"
+            alt="Parsely"
+            style={{
+              height: 52,
+              width: 'auto',
+              objectFit: 'contain',
+            }}
+          />
         </div>
         <p style={{ color: 'var(--muted)', fontSize: 14 }}>כניסה למערכת ניתוח התנגדויות</p>
       </div>

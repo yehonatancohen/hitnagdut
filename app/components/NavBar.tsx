@@ -54,14 +54,17 @@ export default function NavBar() {
       }}
     >
       {/* Logo */}
-      <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-        <div style={{
-          width: 32, height: 32, background: 'var(--brass)', borderRadius: 4,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontWeight: 900, fontSize: 17, color: '#fff', flexShrink: 0,
-          letterSpacing: '-1px',
-        }}>נ</div>
-        <span style={{ fontWeight: 800, fontSize: 18, color: 'var(--navy)', letterSpacing: '-0.5px' }}>נוסח</span>
+      <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+        <img
+          src="/logo.png"
+          alt="Parsely"
+          style={{
+            height: 38,
+            width: 'auto',
+            objectFit: 'contain',
+            flexShrink: 0,
+          }}
+        />
       </Link>
 
       {/* Right side */}

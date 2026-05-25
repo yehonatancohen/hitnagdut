@@ -210,15 +210,11 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div style={{ background: '#fff', border: '1px solid var(--border-warm)', borderRadius: 4, overflow: 'hidden' }}>
-              {/* Excel chrome header */}
               <div style={{
-                background: 'var(--excel-green)', padding: '5px 12px',
-                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'var(--excel-green)', padding: '6px 16px',
+                display: 'flex', alignItems: 'center',
               }}>
-                <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#FF5F57' }} />
-                <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#FEBC2E' }} />
-                <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#28C840' }} />
-                <span style={{ marginRight: 8, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.3px' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.3px' }}>
                   היסטוריית עבודות
                 </span>
               </div>

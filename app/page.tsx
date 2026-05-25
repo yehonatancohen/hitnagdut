@@ -105,9 +105,8 @@ function MiniExcelTable() {
   const isGreen = (ci: number) => ci === 1 || ci === 4
   return (
     <div style={{ background: '#fff', borderRadius: 6, overflow: 'hidden', boxShadow: '0 8px 32px rgba(10,22,60,0.14)', border: '1px solid var(--border-warm)', width: 380, flexShrink: 0 }}>
-      <div style={{ background: '#1D6F42', height: 28, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 7 }}>
-        {['#FF5F57', '#FFBD2E', '#28C840'].map((c, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', marginRight: 'auto', fontWeight: 500 }}>התנגדויות_2024.xlsx</span>
+      <div style={{ background: '#1D6F42', height: 28, display: 'flex', alignItems: 'center', padding: '0 16px' }}>
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginRight: 'auto', fontWeight: 600 }}>התנגדויות_2024.xlsx</span>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl', fontSize: 11 }}>
@@ -213,9 +212,8 @@ function LandingPage({ onEnterApp }: { onEnterApp: () => void }) {
             <p style={{ fontSize: 16, color: 'var(--navy)', opacity: 0.6, margin: 0 }}>5 עמודות מובנות, כותרות ממוקדות, מוכן לעריכה מיידית</p>
           </div>
           <div style={{ borderRadius: 8, overflow: 'hidden', boxShadow: '0 16px 56px rgba(10,22,60,0.14)', border: '1px solid var(--border-warm)', maxWidth: 1000, margin: '0 auto' }}>
-            <div style={{ background: '#1D6F42', padding: '0 16px', height: 36, display: 'flex', alignItems: 'center', gap: 8 }}>
-              {['#FF5F57', '#FFBD2E', '#28C840'].map((c, i) => <div key={i} style={{ width: 12, height: 12, borderRadius: '50%', background: c }} />)}
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', marginRight: 'auto', fontWeight: 500 }}>התנגדויות_תל-אביב_2024.xlsx — Excel</span>
+            <div style={{ background: '#1D6F42', padding: '0 20px', height: 36, display: 'flex', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', marginRight: 'auto', fontWeight: 600 }}>התנגדויות_תל-אביב_2024.xlsx — Excel</span>
             </div>
             <div style={{ background: '#F4F4F4', borderBottom: '1px solid #D8D8D8', padding: '4px 16px', display: 'flex', gap: 20, direction: 'rtl' }}>
               {['בית', 'הוספה', 'פריסת עמוד', 'נוסחאות'].map((t, i) => (
@@ -308,11 +306,20 @@ function LandingPage({ onEnterApp }: { onEnterApp: () => void }) {
 
       {/* ── Footer ── */}
       <footer style={{ background: 'var(--navy)', padding: '40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, direction: 'rtl' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 30, height: 30, background: 'var(--brass)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16, color: '#fff' }}>נ</div>
-          <span style={{ fontWeight: 800, fontSize: 18, color: '#fff', letterSpacing: '-0.5px' }}>נוסח</span>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <img
+            src="/logo.png"
+            alt="Parsely"
+            style={{
+              height: 34,
+              width: 'auto',
+              objectFit: 'contain',
+              filter: 'brightness(0) invert(1)',
+              flexShrink: 0,
+            }}
+          />
         </div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)' }}>© 2024 נוסח · כל הזכויות שמורות</div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)' }}>© 2026 Parsely · כל הזכויות שמורות</div>
         <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)' }}>נבנה לשוק הישראלי</div>
       </footer>
     </div>
@@ -429,13 +436,42 @@ export default function Home() {
     setObjections([]); setLogsOpen(true); setErrorMsg(''); setExpandedAnalysis(new Set())
     setProcessingStep(0)
 
-    const formData = new FormData()
-    files.forEach(f => formData.append('pdf', f))
-    formData.append('fileName', fileName.trim() || 'התנגדויות_מאוגדות')
-    formData.append('mode', outputMode)
-
     try {
-      const res = await fetch('/api/process', { method: 'POST', body: formData })
+      // Step 1: Get signed upload URLs from server
+      setLogs(['מכין העלאת קבצים...'])
+      const urlRes = await fetch('/api/upload-urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: files.map(f => ({ name: f.name })) }),
+      })
+      if (!urlRes.ok) {
+        const err = await urlRes.json().catch(() => ({}))
+        setErrorMsg(err.error || 'שגיאה בהכנת ההעלאה. אנא נסה שוב.')
+        setState('error'); return
+      }
+      const uploadTargets: Array<{ path: string; signedUrl: string; name: string }> = await urlRes.json()
+
+      // Step 2: Upload files directly to Supabase Storage
+      setLogs(prev => [...prev, 'מעלה קבצים...'])
+      await Promise.all(
+        files.map((file, i) =>
+          fetch(uploadTargets[i].signedUrl, {
+            method: 'PUT',
+            body: file,
+            headers: { 'Content-Type': 'application/pdf' },
+          })
+        )
+      )
+      setLogs(prev => [...prev, 'העלאה הושלמה. מתחיל עיבוד...'])
+
+      // Step 3: Process via API with Supabase file paths
+      const res = await fetch('/api/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filePaths: uploadTargets.map((t, i) => ({ path: t.path, name: files[i].name })),
+        }),
+      })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         setErrorMsg(err.error || 'שגיאה בעיבוד. אנא נסה שוב.')
@@ -561,41 +597,62 @@ export default function Home() {
 
   const totalClausesCount = objections.reduce((sum, obj) => sum + obj.sections.reduce((s, sec) => s + sec.clauses.length, 0), 0)
 
+  if (!isLoaded) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'var(--parchment)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }} dir="rtl">
+        <div style={{
+          width: 32,
+          height: 32,
+          border: '3px solid var(--border-warm)',
+          borderTopColor: 'var(--brass)',
+          borderRadius: '50%',
+          animation: 'spin-brass 0.75s linear infinite',
+        }} />
+      </div>
+    )
+  }
+
   if (view === 'landing') {
     return <LandingPage onEnterApp={() => setView('tool')} />
   }
 
   // ── Tool view ──
   return (
-    <main style={{ minHeight: 'calc(100vh - 64px)', background: 'var(--parchment)', padding: '40px 24px', direction: 'rtl' }}>
+    <main style={{ minHeight: 'calc(100vh - 64px)', background: 'var(--parchment)', padding: '32px 24px', direction: 'rtl' }}>
       <div style={{ maxWidth: 860, margin: '0 auto' }}>
 
         {/* Page header */}
-        <div style={{ marginBottom: 28 }}>
+        <div style={{ marginBottom: 20 }}>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--navy)', margin: 0, letterSpacing: '-0.5px' }}>עיבוד התנגדויות תכנוניות</h1>
           <p style={{ fontSize: 14, color: 'var(--muted)', marginTop: 4 }}>העלה מסמכי PDF לניתוח והפקת דוח Excel</p>
         </div>
 
         {/* Main card */}
-        <div style={{ background: '#fff', border: '1px solid var(--border-warm)', borderRadius: 8, padding: 28, boxShadow: '0 2px 12px rgba(10,22,60,0.06)' }}>
+        <div style={{ background: '#fff', border: '1px solid var(--border-warm)', borderRadius: 8, padding: 24, boxShadow: '0 2px 12px rgba(10,22,60,0.06)' }}>
 
           {/* ── IDLE ── */}
           {state === 'idle' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Auth notice */}
               {isLoaded && !isSignedIn && (
-                <div style={{ background: 'rgba(10,22,60,0.04)', border: '1px solid var(--border-warm)', borderRadius: 6, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--navy)' }}>יש להתחבר כדי לעבד מסמכים</p>
+                <div style={{ background: 'rgba(10,22,60,0.04)', border: '1px solid var(--border-warm)', borderRadius: 6, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>יש להתחבר כדי לעבד מסמכים</p>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <Link href="/sign-in" style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', border: '1px solid var(--border-warm)', padding: '6px 14px', borderRadius: 4, textDecoration: 'none' }}>כניסה</Link>
-                    <Link href="/sign-up" style={{ fontSize: 13, fontWeight: 700, color: '#fff', background: 'var(--navy)', padding: '6px 14px', borderRadius: 4, textDecoration: 'none' }}>הרשמה</Link>
+                    <Link href="/sign-in" style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy)', border: '1px solid var(--border-warm)', padding: '5px 12px', borderRadius: 4, textDecoration: 'none' }}>כניסה</Link>
+                    <Link href="/sign-up" style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: 'var(--navy)', padding: '5px 12px', borderRadius: 4, textDecoration: 'none' }}>הרשמה</Link>
                   </div>
                 </div>
               )}
               {isLoaded && isSignedIn && credits === 0 && (
-                <div style={{ background: 'rgba(180,140,50,0.06)', border: '1px solid rgba(180,140,50,0.25)', borderRadius: 6, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--navy)' }}>אין קרדיטים זמינים — יש לרכוש קרדיטים לפני העיבוד</p>
-                  <Link href="/dashboard" style={{ fontSize: 13, fontWeight: 700, color: 'var(--brass)', border: '1px solid rgba(180,140,50,0.3)', padding: '6px 14px', borderRadius: 4, textDecoration: 'none', whiteSpace: 'nowrap' as const }}>לרכישה</Link>
+                <div style={{ background: 'rgba(180,140,50,0.06)', border: '1px solid rgba(180,140,50,0.25)', borderRadius: 6, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>אין קרדיטים זמינים — יש לרכוש קרדיטים לפני העיבוד</p>
+                  <Link href="/dashboard" style={{ fontSize: 12, fontWeight: 700, color: 'var(--brass)', border: '1px solid rgba(180,140,50,0.3)', padding: '5px 12px', borderRadius: 4, textDecoration: 'none', whiteSpace: 'nowrap' as const }}>לרכישה</Link>
                 </div>
               )}
 
@@ -605,7 +662,7 @@ export default function Home() {
                 onClick={() => fileInputRef.current?.click()}
                 style={{
                   border: `2px dashed ${isDragging ? 'var(--brass)' : 'var(--border-warm)'}`,
-                  borderRadius: 8, padding: '52px 32px', textAlign: 'center', cursor: 'pointer',
+                  borderRadius: 8, padding: '24px 20px', textAlign: 'center', cursor: 'pointer',
                   background: isDragging ? 'rgba(180,140,50,0.04)' : '#fff',
                   transition: 'all 0.2s', position: 'relative', overflow: 'hidden',
                 }}
@@ -614,12 +671,12 @@ export default function Home() {
                 <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: 'linear-gradient(var(--border-warm) 1px, transparent 1px), linear-gradient(90deg, var(--border-warm) 1px, transparent 1px)', backgroundSize: '32px 32px', opacity: isDragging ? 0.5 : 0.25, transition: 'opacity 0.2s' }} />
                 <input ref={fileInputRef} type="file" accept=".pdf" multiple onChange={handleInputChange} style={{ display: 'none' }} />
                 <div style={{ position: 'relative', zIndex: 1 }}>
-                  <div style={{ width: 68, height: 68, borderRadius: 10, background: isDragging ? 'var(--brass)' : 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: isDragging ? '0 8px 24px rgba(180,140,50,0.3)' : '0 4px 16px rgba(10,22,60,0.2)', transition: 'all 0.2s' }}>
-                    <svg width="30" height="30" viewBox="0 0 32 32" fill="none"><path d="M16 20V8M16 8L10 14M16 8l6 6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M6 24h20" stroke="white" strokeWidth="2" strokeLinecap="round" opacity=".5" /></svg>
+                  <div style={{ width: 44, height: 44, borderRadius: 8, background: isDragging ? 'var(--brass)' : 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', boxShadow: isDragging ? '0 4px 12px rgba(180,140,50,0.2)' : '0 2px 8px rgba(10,22,60,0.12)', transition: 'all 0.2s' }}>
+                    <svg width="20" height="20" viewBox="0 0 32 32" fill="none"><path d="M16 20V8M16 8L10 14M16 8l6 6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M6 24h20" stroke="white" strokeWidth="2" strokeLinecap="round" opacity=".5" /></svg>
                   </div>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--navy)', margin: '0 0 8px', letterSpacing: '-0.3px' }}>{isDragging ? 'שחרר להעלאה' : 'גרור קבצי PDF לכאן'}</p>
-                  <p style={{ fontSize: 13, color: 'var(--navy)', opacity: 0.5, margin: '0 0 20px' }}>או לחץ לבחירת קבצים · PDF בלבד · עד 50MB לקובץ</p>
-                  <div style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--navy)', color: '#fff', borderRadius: 4, fontSize: 14, fontWeight: 600 }}>בחר קבצי PDF</div>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--navy)', margin: '0 0 4px', letterSpacing: '-0.3px' }}>{isDragging ? 'שחרר להעלאה' : 'גרור קבצי PDF לכאן'}</p>
+                  <p style={{ fontSize: 12, color: 'var(--navy)', opacity: 0.5, margin: '0 0 14px' }}>או לחץ לבחירת קבצים · PDF בלבד · עד 50MB לקובץ</p>
+                  <div style={{ display: 'inline-block', padding: '7px 18px', background: 'var(--navy)', color: '#fff', borderRadius: 4, fontSize: 13, fontWeight: 600 }}>בחר קבצי PDF</div>
                 </div>
               </div>
 
@@ -785,9 +842,8 @@ export default function Home() {
 
               {/* Preview table */}
               <div style={{ borderRadius: 6, overflow: 'hidden', border: '1px solid var(--border-warm)', boxShadow: '0 2px 8px rgba(10,22,60,0.06)' }}>
-                <div style={{ background: '#1D6F42', height: 30, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 7 }}>
-                  {['#FF5F57', '#FFBD2E', '#28C840'].map((c, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginRight: 'auto' }}>תצוגה מקדימה</span>
+                <div style={{ background: '#1D6F42', height: 30, display: 'flex', alignItems: 'center', padding: '0 16px' }}>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginRight: 'auto', fontWeight: 600 }}>תצוגה מקדימה</span>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl', fontSize: 13 }}>
@@ -908,9 +964,8 @@ export default function Home() {
 
               {/* Results table */}
               <div style={{ borderRadius: 6, overflow: 'hidden', border: '1px solid var(--border-warm)' }}>
-                <div style={{ background: '#1D6F42', height: 30, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 7 }}>
-                  {['#FF5F57', '#FFBD2E', '#28C840'].map((c, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginRight: 'auto' }}>{(fileName.trim() || 'התנגדויות_מאוגדות')}.xlsx — Excel</span>
+                <div style={{ background: '#1D6F42', height: 30, display: 'flex', alignItems: 'center', padding: '0 16px' }}>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginRight: 'auto', fontWeight: 600 }}>{(fileName.trim() || 'התנגדויות_מאוגדות')}.xlsx — Excel</span>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl', fontSize: 13 }}>
