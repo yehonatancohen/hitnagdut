@@ -93,9 +93,63 @@ export function extractJSON(text: string): unknown {
 // Valid single-char JSON escape sequences after a backslash
 const VALID_ESCAPE_CHARS = new Set(['"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u'])
 
+function isValidClosingQuote(raw: string, quoteIndex: number): boolean {
+  let j = quoteIndex + 1
+  while (j < raw.length && (raw[j] === ' ' || raw[j] === '\t' || raw[j] === '\n' || raw[j] === '\r')) {
+    j++
+  }
+  if (j >= raw.length) {
+    return true
+  }
+
+  const nextChar = raw[j]
+
+  if (nextChar === ':') {
+    return true
+  }
+
+  if (nextChar === ',' || nextChar === '}' || nextChar === ']') {
+    if (nextChar === ',') {
+      let k = j + 1
+      while (k < raw.length && (raw[k] === ' ' || raw[k] === '\t' || raw[k] === '\n' || raw[k] === '\r')) {
+        k++
+      }
+      if (k >= raw.length) return false
+      const postCommaChar = raw[k]
+      const validJSONStart = postCommaChar === '"' || 
+                             postCommaChar === '{' || 
+                             postCommaChar === '[' || 
+                             postCommaChar === 't' || 
+                             postCommaChar === 'f' || 
+                             postCommaChar === 'n' || 
+                             postCommaChar === '-' || 
+                             (postCommaChar >= '0' && postCommaChar <= '9')
+      return validJSONStart
+    }
+
+    if (nextChar === '}' || nextChar === ']') {
+      let k = j + 1
+      while (k < raw.length && (raw[k] === ' ' || raw[k] === '\t' || raw[k] === '\n' || raw[k] === '\r')) {
+        k++
+      }
+      if (k >= raw.length) return true
+      const postBracketChar = raw[k]
+      const validJSONPostBracket = postBracketChar === ',' || 
+                                   postBracketChar === '}' || 
+                                   postBracketChar === ']'
+      return validJSONPostBracket
+    }
+
+    return true
+  }
+
+  return false
+}
+
 function repairJSON(raw: string): string {
   let result = ''
   let inString = false
+  const stack: ('{' | '[')[] = []
   let i = 0
 
   while (i < raw.length) {
@@ -103,7 +157,21 @@ function repairJSON(raw: string): string {
 
     if (!inString) {
       result += ch
-      if (ch === '"') inString = true
+      if (ch === '{') {
+        stack.push('{')
+      } else if (ch === '[') {
+        stack.push('[')
+      } else if (ch === '}') {
+        if (stack[stack.length - 1] === '{') {
+          stack.pop()
+        }
+      } else if (ch === ']') {
+        if (stack[stack.length - 1] === '[') {
+          stack.pop()
+        }
+      } else if (ch === '"') {
+        inString = true
+      }
       i++
       continue
     }
@@ -123,8 +191,13 @@ function repairJSON(raw: string): string {
     }
 
     if (ch === '"') {
-      inString = false
-      result += ch
+      if (isValidClosingQuote(raw, i)) {
+        inString = false
+        result += ch
+      } else {
+        // Unescaped quote inside string value — escape it
+        result += '\\"'
+      }
       i++
       continue
     }
@@ -137,6 +210,15 @@ function repairJSON(raw: string): string {
 
     result += ch
     i++
+  }
+
+  if (inString) {
+    result += '"'
+  }
+  while (stack.length > 0) {
+    const open = stack.pop()
+    if (open === '{') result += '}'
+    if (open === '[') result += ']'
   }
 
   return result
