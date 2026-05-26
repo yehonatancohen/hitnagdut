@@ -1,27 +1,22 @@
 import { auth } from '@clerk/nextjs/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import sql from '@/lib/db'
 
 export async function GET() {
   try {
     const { userId } = await auth()
     if (!userId) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: user } = await supabaseAdmin
-      .from('users')
-      .select('id')
-      .eq('clerk_id', userId)
-      .single()
-
+    const [user] = await sql`SELECT id FROM users WHERE clerk_id = ${userId}`
     if (!user) return Response.json({ jobs: [] })
 
-    const { data: jobs } = await supabaseAdmin
-      .from('jobs')
-      .select('id, created_at, file_names, file_count, clause_count, status')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(50)
-
-    return Response.json({ jobs: jobs ?? [] })
+    const jobs = await sql`
+      SELECT id, created_at, file_names, file_count, clause_count, status
+      FROM jobs
+      WHERE user_id = ${user.id}
+      ORDER BY created_at DESC
+      LIMIT 50
+    `
+    return Response.json({ jobs })
   } catch (err) {
     console.error('[/api/jobs GET]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
@@ -33,25 +28,17 @@ export async function POST(req: Request) {
     const { userId } = await auth()
     if (!userId) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: user } = await supabaseAdmin
-      .from('users')
-      .select('id')
-      .eq('clerk_id', userId)
-      .single()
-
+    const [user] = await sql`SELECT id FROM users WHERE clerk_id = ${userId}`
     if (!user) return Response.json({ error: 'User not found' }, { status: 404 })
 
-    const body = await req.json()
-    const { file_names, file_count, clause_count, result_json } = body
+    const { file_names, file_count, clause_count, result_json } = await req.json()
 
-    const { data, error } = await supabaseAdmin
-      .from('jobs')
-      .insert({ user_id: user.id, file_names, file_count, clause_count, result_json })
-      .select('id')
-      .single()
-
-    if (error) return Response.json({ error: error.message }, { status: 500 })
-    return Response.json({ id: data.id })
+    const [job] = await sql`
+      INSERT INTO jobs (user_id, file_names, file_count, clause_count, result_json)
+      VALUES (${user.id}, ${file_names}, ${file_count}, ${clause_count}, ${sql.json(result_json)})
+      RETURNING id
+    `
+    return Response.json({ id: job.id })
   } catch (err) {
     console.error('[/api/jobs POST]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })

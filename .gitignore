@@ -37,6 +37,9 @@ next-env.d.ts
 # Claude Code local settings
 .claude/
 
+# Backend lives in a separate repo
+/backend/
+
 # Sensitive data — PDF inputs and Excel outputs are private client documents
 results/inputs/*
 results/output/*

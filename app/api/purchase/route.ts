@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { addCredits, ensureUser } from '@/lib/credits'
-import { supabaseAdmin } from '@/lib/supabase'
+import sql from '@/lib/db'
 
 const PLANS = {
   single:     { credits: 1,  price_ils: 29,  label: 'עבודה בודדת' },
@@ -15,28 +15,18 @@ export async function POST(req: Request) {
     const { userId } = await auth()
     if (!userId) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const body = await req.json()
-    const plan = body.plan as PlanKey
-
+    const { plan } = await req.json() as { plan: PlanKey }
     if (!PLANS[plan]) return Response.json({ error: 'Invalid plan' }, { status: 400 })
 
-    await ensureUser(userId)
-
+    const internalId = await ensureUser(userId)
     const { credits, price_ils } = PLANS[plan]
 
     await addCredits(userId, credits)
 
-    const { data: user } = await supabaseAdmin
-      .from('users').select('id').eq('clerk_id', userId).single()
-
-    if (user) {
-      await supabaseAdmin.from('purchases').insert({
-        user_id: user.id,
-        plan,
-        credits_added: credits,
-        price_ils,
-      })
-    }
+    await sql`
+      INSERT INTO purchases (user_id, plan, credits_added, price_ils)
+      VALUES (${internalId}, ${plan}, ${credits}, ${price_ils})
+    `
 
     return Response.json({ ok: true, credits_added: credits })
   } catch (e) {

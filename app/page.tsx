@@ -437,41 +437,12 @@ export default function Home() {
     setProcessingStep(0)
 
     try {
-      // Step 1: Get signed upload URLs from server
-      setLogs(['מכין העלאת קבצים...'])
-      const urlRes = await fetch('/api/upload-urls', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: files.map(f => ({ name: f.name })) }),
-      })
-      if (!urlRes.ok) {
-        const err = await urlRes.json().catch(() => ({}))
-        setErrorMsg(err.error || 'שגיאה בהכנת ההעלאה. אנא נסה שוב.')
-        setState('error'); return
-      }
-      const uploadTargets: Array<{ path: string; signedUrl: string; name: string }> = await urlRes.json()
+      setLogs(['שולח קבצים לעיבוד...'])
 
-      // Step 2: Upload files directly to Supabase Storage
-      setLogs(prev => [...prev, 'מעלה קבצים...'])
-      await Promise.all(
-        files.map((file, i) =>
-          fetch(uploadTargets[i].signedUrl, {
-            method: 'PUT',
-            body: file,
-            headers: { 'Content-Type': 'application/pdf' },
-          })
-        )
-      )
-      setLogs(prev => [...prev, 'העלאה הושלמה. מתחיל עיבוד...'])
+      const formData = new FormData()
+      files.forEach(f => formData.append('files', f))
 
-      // Step 3: Process via API with Supabase file paths
-      const res = await fetch('/api/process', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filePaths: uploadTargets.map((t, i) => ({ path: t.path, name: files[i].name })),
-        }),
-      })
+      const res = await fetch('/api/process', { method: 'POST', body: formData })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         setErrorMsg(err.error || 'שגיאה בעיבוד. אנא נסה שוב.')
@@ -496,7 +467,7 @@ export default function Home() {
         }
       }
     } catch {
-      setErrorMsg('שגיאת רשת בעיבוד הראשוני. אנא נסה שוב.')
+      setErrorMsg('שגיאת רשת בעיבוד. אנא נסה שוב.')
       setState('error')
     }
   }

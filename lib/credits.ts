@@ -1,110 +1,60 @@
-import { supabaseAdmin } from './supabase'
+import sql from './db'
 
-// Creates the user + credits row if they don't exist yet.
-// Call this at the start of any authenticated API route instead of relying on the webhook.
 export async function ensureUser(
   clerkId: string,
   profile?: { email?: string | null; name?: string | null }
 ): Promise<string> {
-  const { data: existing } = await supabaseAdmin
-    .from('users')
-    .select('id')
-    .eq('clerk_id', clerkId)
-    .single()
+  const [existing] = await sql`SELECT id FROM users WHERE clerk_id = ${clerkId}`
+  if (existing) return existing.id as string
 
-  if (existing) return existing.id
-
-  const { data: created, error } = await supabaseAdmin
-    .from('users')
-    .insert({ clerk_id: clerkId, email: profile?.email ?? null, name: profile?.name ?? null })
-    .select('id')
-    .single()
-
-  if (error || !created) throw new Error('Failed to create user: ' + error?.message)
-
-  await supabaseAdmin
-    .from('user_credits')
-    .insert({ user_id: created.id, credits_remaining: 0 })
-
-  return created.id
+  const [created] = await sql`
+    INSERT INTO users (clerk_id, email, name)
+    VALUES (${clerkId}, ${profile?.email ?? null}, ${profile?.name ?? null})
+    ON CONFLICT (clerk_id) DO UPDATE SET email = EXCLUDED.email, name = EXCLUDED.name
+    RETURNING id
+  `
+  await sql`
+    INSERT INTO user_credits (user_id, credits_remaining)
+    VALUES (${created.id}, 0)
+    ON CONFLICT (user_id) DO NOTHING
+  `
+  return created.id as string
 }
 
 export async function getCredits(clerkId: string): Promise<number> {
-  const { data: user } = await supabaseAdmin
-    .from('users')
-    .select('id')
-    .eq('clerk_id', clerkId)
-    .single()
-
-  if (!user) return 0
-
-  const { data } = await supabaseAdmin
-    .from('user_credits')
-    .select('credits_remaining')
-    .eq('user_id', user.id)
-    .single()
-
-  return data?.credits_remaining ?? 0
+  const [row] = await sql`
+    SELECT uc.credits_remaining
+    FROM users u
+    JOIN user_credits uc ON uc.user_id = u.id
+    WHERE u.clerk_id = ${clerkId}
+  `
+  return (row?.credits_remaining as number) ?? 0
 }
 
+// Atomically deducts one credit — returns false if balance was already 0
 export async function deductCredit(clerkId: string): Promise<boolean> {
-  const { data: user } = await supabaseAdmin
-    .from('users')
-    .select('id')
-    .eq('clerk_id', clerkId)
-    .single()
-
-  if (!user) return false
-
-  const { data } = await supabaseAdmin
-    .from('user_credits')
-    .select('credits_remaining')
-    .eq('user_id', user.id)
-    .single()
-
-  const current = data?.credits_remaining ?? 0
-  if (current <= 0) return false
-
-  const { error } = await supabaseAdmin
-    .from('user_credits')
-    .update({ credits_remaining: current - 1, updated_at: new Date().toISOString() })
-    .eq('user_id', user.id)
-
-  return !error
+  const [row] = await sql`
+    UPDATE user_credits uc
+    SET credits_remaining = uc.credits_remaining - 1, updated_at = NOW()
+    FROM users u
+    WHERE uc.user_id = u.id
+      AND u.clerk_id = ${clerkId}
+      AND uc.credits_remaining > 0
+    RETURNING uc.credits_remaining
+  `
+  return !!row
 }
 
 export async function addCredits(clerkId: string, amount: number): Promise<void> {
-  const { data: user } = await supabaseAdmin
-    .from('users')
-    .select('id')
-    .eq('clerk_id', clerkId)
-    .single()
-
-  if (!user) return
-
-  const { data: existing } = await supabaseAdmin
-    .from('user_credits')
-    .select('credits_remaining')
-    .eq('user_id', user.id)
-    .single()
-
-  if (existing) {
-    await supabaseAdmin
-      .from('user_credits')
-      .update({ credits_remaining: existing.credits_remaining + amount, updated_at: new Date().toISOString() })
-      .eq('user_id', user.id)
-  } else {
-    await supabaseAdmin
-      .from('user_credits')
-      .insert({ user_id: user.id, credits_remaining: amount })
-  }
+  await sql`
+    UPDATE user_credits uc
+    SET credits_remaining = uc.credits_remaining + ${amount}, updated_at = NOW()
+    FROM users u
+    WHERE uc.user_id = u.id AND u.clerk_id = ${clerkId}
+  `
 }
 
 export async function isUserBlocked(clerkId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin
-    .from('users')
-    .select('is_blocked')
-    .eq('clerk_id', clerkId)
-    .single()
-  return data?.is_blocked ?? false
+  const [row] = await sql`SELECT is_blocked FROM users WHERE clerk_id = ${clerkId}`
+  return (row?.is_blocked as boolean) ?? false
 }
