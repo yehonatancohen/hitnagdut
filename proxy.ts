@@ -1,13 +1,15 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
-const publicRoutes = createRouteMatcher([
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/api/webhooks/clerk',
+const protectedPages = createRouteMatcher([
+  '/',
+  '/dashboard(.*)',
+  '/admin(.*)',
 ])
 
 export default clerkMiddleware(async (auth, req) => {
-  if (!publicRoutes(req)) {
+  // Only redirect to sign-in for page routes — API routes handle auth themselves
+  // to avoid Vercel edge caching Clerk's 404 protect-rewrite for API paths
+  if (protectedPages(req)) {
     await auth.protect()
   }
 })
