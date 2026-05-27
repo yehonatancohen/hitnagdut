@@ -58,8 +58,9 @@ export async function POST(req: NextRequest) {
       headers: { 'x-internal-key': BACKEND_API_KEY },
       body: outgoing,
     })
-  } catch {
-    return Response.json({ error: 'לא ניתן להתחבר לשרת העיבוד.' }, { status: 503 })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return Response.json({ error: 'connection_failed', detail: msg }, { status: 503 })
   }
 
   if (!backendRes.ok) {
