@@ -1,3 +1,4 @@
+import asyncio
 import json
 import re
 import shutil
@@ -76,8 +77,18 @@ async def process_session(
                 yield _log(f"[{i+1}/{n}] {name}")
 
                 try:
+                    # ── Stage 1 ──────────────────────────────────────────────
                     yield _log("  שלב 1: מזהה פרטי מגיש...")
-                    raw_meta = await gemini_generate(STAGE1_USER, STAGE1_SYSTEM, pdf_bytes)
+                    task1 = asyncio.ensure_future(
+                        gemini_generate(STAGE1_USER, STAGE1_SYSTEM, pdf_bytes)
+                    )
+                    while True:
+                        done, _ = await asyncio.wait({task1}, timeout=15)
+                        if done:
+                            break
+                        yield ": keepalive\n\n"
+                    raw_meta = task1.result()
+
                     md = extract_json(raw_meta)
                     meta = {
                         "megish":      coerce(md.get("megish")),
@@ -89,8 +100,18 @@ async def process_session(
                     megish = meta["megish"]
                     yield _log(f"  ✓ {megish}{kpart}")
 
+                    # ── Stage 2 ──────────────────────────────────────────────
                     yield _log("  שלב 2: מחלץ סעיפי התנגדות...")
-                    raw_secs = await gemini_generate(STAGE2_USER, STAGE2_SYSTEM, pdf_bytes)
+                    task2 = asyncio.ensure_future(
+                        gemini_generate(STAGE2_USER, STAGE2_SYSTEM, pdf_bytes)
+                    )
+                    while True:
+                        done, _ = await asyncio.wait({task2}, timeout=15)
+                        if done:
+                            break
+                        yield ": keepalive\n\n"
+                    raw_secs = task2.result()
+
                     sd = extract_json(raw_secs)
                     sections = []
                     for s in (sd.get("sections") or []):
