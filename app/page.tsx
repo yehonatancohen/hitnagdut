@@ -363,9 +363,10 @@ export default function Home() {
   const [reportSubmitted, setReportSubmitted] = useState(false)
   const [submittingReport, setSubmittingReport] = useState(false)
 
-  // Skip landing for logged-in users
   useEffect(() => {
-    if (isLoaded && isSignedIn) setView('tool')
+    if (!isLoaded) return
+    if (isSignedIn) setView('tool')
+    else setView('landing')
   }, [isLoaded, isSignedIn])
 
   useEffect(() => {
@@ -952,9 +953,7 @@ export default function Home() {
                                           </div>}
                                         </div>
                                       ) : (
-                                        <button disabled={stage3Loading} onClick={() => analyzeSingleSection(objIdx, secIdx)} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '4px 10px', border: '1px solid var(--border-warm)', borderRadius: 4, cursor: 'pointer', background: '#fff', color: 'var(--navy)', fontFamily: 'inherit', margin: 'auto', opacity: stage3Loading ? 0.5 : 1 }}>
-                                          נתח פרק
-                                        </button>
+                                        <span style={{ color: 'var(--muted)', fontSize: 12 }}>—</span>
                                       )
                                   ) : null}
                                 </td>

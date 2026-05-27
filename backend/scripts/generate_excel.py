@@ -35,8 +35,22 @@ COLUMNS = [
     ("מהות",            80),
     ("נושא",            15),
     ("נספח/מיקום התיקון", 20),
-    ("נותן המענה",      20),
+    ("נותן המענה",      22),
     ("מענה",            40),
+]
+
+# ─── Topic → advisor mapping (for reference sheet) ───────────────────────────
+TOPIC_MAPPING = [
+    ("תוספת יחידות דיור וזכויות בנייה",       "פרוגרמה, שמאי",                              "תוספת יחידות, תמ\"א 38, שינוי ייעוד, היטל השבחה, תמורות לבעלים"),
+    ("תנועה, חניה וגישה",                      "יועץ תנועה",                                 "מקומות חניה, גישה לנכס, עומס תנועה, צמתים"),
+    ("תשתיות — מים, ביוב, ניקוז",             "יועץ תשתיות",                                "ניקוז שטחים, קיבולת ביוב, לחץ מים, תעלות"),
+    ("נוף ושטחים פתוחים",                      "אדריכל נוף",                                 "עצי נוי, שטחים ירוקים, גינות ציבוריות, מדרכות"),
+    ("סביבה, רעש וזיהום",                      "יועץ סביבה",                                 "רעש, זיהום אוויר, קרינה, פסולת, ריחות"),
+    ("חקלאות ועצים",                            "אגרונום",                                    "קרקע חקלאית, עצי פרי, ניקוז חקלאי, אדמת נחל"),
+    ("אדריכלות ועיצוב — מבנה, גובה, קווי בנין", "אדריכל",                                   "גובה בנייה, מרחקים, חזית, מס' קומות, נסיגות"),
+    ("שמאות, ירידת ערך ופיצויים",              "שמאי",                                       "ירידת ערך נכס, פיצויי הפקעה, תשלומי איזון"),
+    ("מדיניות תכנונית כללית",                  "רשות מקומית, ועדת תכנון",                    "ייעוד קרקע, תוכניות מתאר, עקרונות תכנון"),
+    ("התחדשות עירונית — פינוי-בינוי / תמ\"א", "הרשות להתחדשות עירונית, פרוגרמה, שמאי",    "פינוי-בינוי, תמ\"א 38, הסכמות דיירים, תמורות"),
 ]
 
 
@@ -56,8 +70,7 @@ def row_height_for(text: str) -> float:
     return max(15, min(300, lines * 14))
 
 
-def build_workbook(objections: list) -> bytes:
-    wb = Workbook()
+def build_objections_sheet(wb: Workbook, objections: list) -> None:
     ws = wb.active
     ws.title = "נושאי ההתנגדות"
     ws.sheet_view.rightToLeft = True
@@ -95,9 +108,9 @@ def build_workbook(objections: list) -> bytes:
     for obj_idx, obj in enumerate(objections, 1):
         meta    = obj.get("meta", {})
 
-        megish     = meta.get("megish", "")
-        beshem     = meta.get("beshem", "")
-        ktovet     = meta.get("ktovet", "")
+        megish      = meta.get("megish", "")
+        beshem      = meta.get("beshem", "")
+        ktovet      = meta.get("ktovet", "")
         gush_chelka = meta.get("gush_chelka", "")
 
         # ── Cyan header row ──────────────────────────────────────────────────
@@ -122,33 +135,46 @@ def build_workbook(objections: list) -> bytes:
         # ── Sections & Clause rows ───────────────────────────────────────────
         sections = obj.get("sections", [])
         for sec in sections:
-            sec_num = str(sec.get("section_number", "") or "")
-            sec_title = str(sec.get("section_title", "") or "")
+            sec_num     = str(sec.get("section_number", "") or "")
+            sec_title   = str(sec.get("section_title", "") or "")
             sec_summary = str(sec.get("section_summary", "") or "")
-            sec_annex = str(sec.get("section_annex", "") or "")
-            clauses = sec.get("clauses", [])
+            sec_annex   = str(sec.get("section_annex", "") or "")
+            clauses     = sec.get("clauses", [])
+
+            # Collect unique gorems for the section (preserving order)
+            seen_gorems = set()
+            unique_gorems = []
+            for c in clauses:
+                g = str(c.get("gorem", "") or "").strip()
+                if g and g not in ("None", "none") and g not in seen_gorems:
+                    seen_gorems.add(g)
+                    unique_gorems.append(g)
+            combined_gorem = "\n".join(unique_gorems)
 
             # Check confidence flags to highlight yellow
             missed_some_clauses = sec.get("missed_some_clauses", False)
-            low_confidence = sec.get("confidence", "") == "low"
-            highlight_yellow = missed_some_clauses or low_confidence
-            sec_fill = make_fill(YELLOW_BG) if highlight_yellow else no_fill
+            low_confidence      = sec.get("confidence", "") == "low"
+            highlight_yellow    = missed_some_clauses or low_confidence
+            sec_fill            = make_fill(YELLOW_BG) if highlight_yellow else no_fill
 
             start_row = excel_row
 
             # 1. Section Header Row
-            row_values = [None, None, None, None, None, sec_num, sec_title, sec_summary, sec_annex, "", None]
+            row_values = [None, None, None, None, None, sec_num, sec_title, sec_summary, sec_annex, combined_gorem, None]
             for col_idx, val in enumerate(row_values, 1):
                 cell = ws.cell(row=excel_row, column=col_idx, value=val)
                 cell.fill   = sec_fill
                 cell.border = border
-                if col_idx == 6:          # seif
+                if col_idx == 6:        # seif
                     cell.font      = Font(name="Arial", size=10, bold=True)
                     cell.alignment = align_center
-                elif col_idx == 7:        # mahut (title)
+                elif col_idx == 7:      # mahut (title)
                     cell.font      = Font(name="Arial", size=10, bold=True)
                     cell.alignment = align_top_r
-                elif col_idx in (8, 9):   # nose (summary), annex
+                elif col_idx in (8, 9): # nose, annex
+                    cell.font      = Font(name="Arial", size=10, bold=True)
+                    cell.alignment = align_center
+                elif col_idx == 10:     # gorem (combined)
                     cell.font      = Font(name="Arial", size=10, bold=True)
                     cell.alignment = align_center
                 else:
@@ -160,23 +186,20 @@ def build_workbook(objections: list) -> bytes:
 
             # 2. Section Clause Rows
             for clause in clauses:
-                text = str(clause.get("text", "") or "")
-                gorem = str(clause.get("gorem", "") or "")
+                text  = str(clause.get("text", "") or "")
 
-                if gorem in ("None", "none"): gorem = ""
-
-                row_values = [None, None, None, None, None, sec_num, text, sec_summary, sec_annex, gorem, None]
+                row_values = [None, None, None, None, None, sec_num, text, sec_summary, sec_annex, None, None]
                 for col_idx, val in enumerate(row_values, 1):
                     cell = ws.cell(row=excel_row, column=col_idx, value=val)
                     cell.fill   = sec_fill
                     cell.border = border
-                    if col_idx == 6:          # seif
+                    if col_idx == 6:        # seif
                         cell.font      = clause_font
                         cell.alignment = align_top_c
-                    elif col_idx == 7:        # mahut
+                    elif col_idx == 7:      # mahut
                         cell.font      = clause_font
                         cell.alignment = align_top_r
-                    elif col_idx in (8, 9, 10):   # nose, annex, gorem
+                    elif col_idx in (8, 9): # nose, annex
                         cell.font      = clause_font
                         cell.alignment = align_top_c
                     else:
@@ -186,7 +209,7 @@ def build_workbook(objections: list) -> bytes:
                 ws.row_dimensions[excel_row].height = row_height_for(text)
                 excel_row += 1
 
-            # 3. Vertically merge Section, Subject, and Annex cells
+            # 3. Vertically merge Section, Subject, Annex, and Gorem cells
             end_row = excel_row - 1
             if end_row > start_row:
                 # Merge 'סעיף' column (6)
@@ -204,11 +227,71 @@ def build_workbook(objections: list) -> bytes:
                 ws.cell(row=start_row, column=9).alignment = align_center
                 ws.cell(row=start_row, column=9).font = Font(name="Arial", size=10, bold=True)
 
+                # Merge 'נותן המענה' column (10)
+                ws.merge_cells(start_row=start_row, start_column=10, end_row=end_row, end_column=10)
+                ws.cell(row=start_row, column=10).alignment = Alignment(
+                    horizontal="center", vertical="center", wrap_text=True, readingOrder=2
+                )
+                ws.cell(row=start_row, column=10).font = Font(name="Arial", size=10, bold=True)
+
     # ── Column widths ────────────────────────────────────────────────────────
     for col_idx, (_, width) in enumerate(COLUMNS, 1):
         ws.column_dimensions[get_column_letter(col_idx)].width = width
 
     ws.freeze_panes = "A2"
+
+
+def build_mapping_sheet(wb: Workbook) -> None:
+    """Add a reference sheet: topic category → who should respond."""
+    ws = wb.create_sheet(title="מיפוי נושאים לגורמי מענה")
+    ws.sheet_view.rightToLeft = True
+
+    border = make_border()
+
+    hdr_font  = Font(name="Arial", size=11, bold=True, color="FFFFFF")
+    hdr_fill  = make_fill("1F4E79")
+    hdr_align = Alignment(horizontal="center", vertical="center", wrap_text=True, readingOrder=2)
+
+    headers = ["קטגוריית נושא", "גורמי המענה", "דוגמאות לנושאים"]
+    widths  = [38, 38, 60]
+
+    for col_idx, (hdr, w) in enumerate(zip(headers, widths), 1):
+        cell = ws.cell(row=1, column=col_idx, value=hdr)
+        cell.font      = hdr_font
+        cell.fill      = hdr_fill
+        cell.alignment = hdr_align
+        cell.border    = border
+        ws.column_dimensions[get_column_letter(col_idx)].width = w
+
+    ws.row_dimensions[1].height = 28
+
+    row_align = Alignment(horizontal="right", vertical="center", wrap_text=True, readingOrder=2)
+    body_font = Font(name="Arial", size=10)
+
+    for row_idx, (topic, gorems, examples) in enumerate(TOPIC_MAPPING, 2):
+        fill = make_fill("EBF2F8") if row_idx % 2 == 0 else PatternFill(fill_type=None)
+        for col_idx, val in enumerate([topic, gorems, examples], 1):
+            cell = ws.cell(row=row_idx, column=col_idx, value=val)
+            cell.font      = body_font
+            cell.fill      = fill
+            cell.alignment = row_align
+            cell.border    = border
+        ws.row_dimensions[row_idx].height = 20
+
+    # Title note above table
+    ws.insert_rows(1)
+    title_cell = ws.cell(row=1, column=1,
+        value="טבלת עזר: מיפוי נושאי התנגדות לגורמי מענה — ניתן להתאים לפי הפרויקט")
+    title_cell.font      = Font(name="Arial", size=12, bold=True, color="1F4E79")
+    title_cell.alignment = Alignment(horizontal="right", vertical="center", readingOrder=2)
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=3)
+    ws.row_dimensions[1].height = 24
+
+
+def build_workbook(objections: list) -> bytes:
+    wb = Workbook()
+    build_objections_sheet(wb, objections)
+    build_mapping_sheet(wb)
 
     buf = io.BytesIO()
     wb.save(buf)
@@ -216,7 +299,6 @@ def build_workbook(objections: list) -> bytes:
 
 
 def main():
-    # Force UTF-8 on Windows
     global sys
     sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf-8', buffering=1)
     sys.stderr = open(sys.stderr.fileno(), mode='w', encoding='utf-8', buffering=1)
