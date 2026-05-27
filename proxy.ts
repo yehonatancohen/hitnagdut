@@ -4,7 +4,6 @@ import type { NextRequest } from 'next/server'
 import { validateUploadToken } from '@/lib/upload-token'
 
 const protectedPages = createRouteMatcher([
-  '/',
   '/dashboard(.*)',
   '/admin(.*)',
 ])
