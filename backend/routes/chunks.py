@@ -21,6 +21,14 @@ def _safe(name: str) -> str:
     return re.sub(r'[^a-zA-Z0-9._-]', '_', name)[:200]
 
 
+def _sse(obj: dict) -> str:
+    return f"data: {json.dumps(obj, ensure_ascii=False)}\n\n"
+
+
+def _log(msg: str) -> str:
+    return _sse({"type": "log", "message": msg})
+
+
 @router.post("/upload-chunk")
 async def upload_chunk(
     session_id: str = Form(...),
@@ -63,11 +71,12 @@ async def process_session(
             for i, fi in enumerate(prepared):
                 name = fi["filename"]
                 pdf_bytes = fi["content"]
+                n = len(prepared)
 
-                yield f"data: {json.dumps({'type': 'log', 'message': f'[{i+1}/{len(prepared)}] {name}'}, ensure_ascii=False)}\n\n"
+                yield _log(f"[{i+1}/{n}] {name}")
 
                 try:
-                    yield f"data: {json.dumps({'type': 'log', 'message': '  שלב 1: מזהה פרטי מגיש...'}, ensure_ascii=False)}\n\n"
+                    yield _log("  שלב 1: מזהה פרטי מגיש...")
                     raw_meta = await gemini_generate(STAGE1_USER, STAGE1_SYSTEM, pdf_bytes)
                     md = extract_json(raw_meta)
                     meta = {
@@ -77,9 +86,10 @@ async def process_session(
                         "gush_chelka": coerce(md.get("gush_chelka")),
                     }
                     kpart = f" | {meta['ktovet']}" if meta["ktovet"] else ""
-                    yield f"data: {json.dumps({'type': 'log', 'message': f'  ✓ {meta[\"megish\"]}{kpart}'}, ensure_ascii=False)}\n\n"
+                    megish = meta["megish"]
+                    yield _log(f"  ✓ {megish}{kpart}")
 
-                    yield f"data: {json.dumps({'type': 'log', 'message': '  שלב 2: מחלץ סעיפי התנגדות...'}, ensure_ascii=False)}\n\n"
+                    yield _log("  שלב 2: מחלץ סעיפי התנגדות...")
                     raw_secs = await gemini_generate(STAGE2_USER, STAGE2_SYSTEM, pdf_bytes)
                     sd = extract_json(raw_secs)
                     sections = []
@@ -92,24 +102,29 @@ async def process_session(
                         })
 
                     clause_count = sum(len(s["clauses"]) for s in sections)
-                    yield f"data: {json.dumps({'type': 'log', 'message': f'  ✓ {len(sections)} פרקים ({clause_count} סעיפים) חולצו'}, ensure_ascii=False)}\n\n"
+                    nsec = len(sections)
+                    yield _log(f"  ✓ {nsec} פרקים ({clause_count} סעיפים) חולצו")
 
                     all_objections.append({"meta": meta, "sections": sections})
                     summary_list.append({"fileName": name, "megish": meta["megish"], "clauses": clause_count})
 
                 except Exception as e:
                     traceback.print_exc()
-                    yield f"data: {json.dumps({'type': 'log', 'message': f'  ✗ שגיאה: {str(e)}'}, ensure_ascii=False)}\n\n"
+                    err_msg = str(e)
+                    yield _log(f"  ✗ שגיאה: {err_msg}")
                     all_objections.append({"meta": {"megish": name, "beshem": "", "ktovet": "", "gush_chelka": ""}, "sections": []})
                     summary_list.append({"fileName": name, "megish": name, "clauses": 0, "failed": True})
 
             total = sum(s["clauses"] for s in summary_list)
-            yield f"data: {json.dumps({'type': 'log', 'message': f'סה\"כ: {len(prepared)} קבצים, {total} סעיפים'}, ensure_ascii=False)}\n\n"
-            yield f"data: {json.dumps({'type': 'log', 'message': 'עיבוד בסיסי הושלם. עובר לשלב בדיקה מקדימה...'}, ensure_ascii=False)}\n\n"
-            yield f"data: {json.dumps({'type': 'done', 'objections': all_objections, 'summary': summary_list}, ensure_ascii=False)}\n\n"
+            nf = len(prepared)
+            total_msg = f'סה"כ: {nf} קבצים, {total} סעיפים'
+            yield _log(total_msg)
+            yield _log("עיבוד בסיסי הושלם. עובר לשלב בדיקה מקדימית...")
+            yield _sse({"type": "done", "objections": all_objections, "summary": summary_list})
 
         except Exception as e:
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)}, ensure_ascii=False)}\n\n"
+            err = str(e)
+            yield _sse({"type": "error", "message": err})
 
         finally:
             shutil.rmtree(session_dir, ignore_errors=True)
