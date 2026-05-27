@@ -500,11 +500,11 @@ export default function Home() {
 
       setLogs(prev => [...prev, 'מעבד קבצים...'])
 
-      // Step 3: trigger processing and stream SSE response
-      const res = await fetch('/api/process', {
+      // Step 3: trigger processing via middleware rewrite (SSE streams edge-side, avoids Lambda buffering)
+      const res = await fetch('/api/process-session-direct', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'process_session', session_id: sessionId, file_names: fileNames }),
+        headers: { 'Content-Type': 'application/json', 'x-upload-token': token },
+        body: JSON.stringify({ session_id: sessionId, file_names: fileNames }),
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -804,7 +804,6 @@ export default function Home() {
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>{files.length} {files.length === 1 ? 'קובץ' : 'קבצים'} בעיבוד</div>
                   <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{logs.length > 0 ? logs[logs.length - 1] : 'מתחיל עיבוד...'}</div>
                 </div>
-                <div className="spinner-brass" />
               </div>
 
               {/* Step cards */}
@@ -818,8 +817,17 @@ export default function Home() {
                       <div style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, background: isDone ? 'var(--excel-green-text)' : isActive ? 'rgba(255,255,255,0.15)' : 'var(--border-warm)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: isActive ? '2px solid rgba(255,255,255,0.3)' : 'none', transition: 'all 0.35s' }}>
                         {isDone ? (
                           <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        ) : isActive ? (
+                          <div style={{
+                            width: 12,
+                            height: 12,
+                            border: '2px solid rgba(255,255,255,0.3)',
+                            borderTopColor: '#fff',
+                            borderRadius: '50%',
+                            animation: 'spin-brass 0.75s linear infinite'
+                          }} />
                         ) : (
-                          <span style={{ fontSize: 11, color: isActive ? 'rgba(255,255,255,0.8)' : 'var(--navy)', opacity: 0.5 }}>{i + 1}</span>
+                          <span style={{ fontSize: 11, color: 'var(--navy)', opacity: 0.5 }}>{i + 1}</span>
                         )}
                       </div>
                       <div style={{ flex: 1 }}>
