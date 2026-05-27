@@ -28,21 +28,36 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const contentType = req.headers.get('content-type') || ''
-  if (!contentType.includes('multipart/form-data')) {
-    return Response.json({ error: 'Expected multipart/form-data' }, { status: 400 })
+  let incoming: FormData
+  try {
+    incoming = await req.formData()
+  } catch {
+    return Response.json({ error: 'Invalid form data' }, { status: 400 })
   }
+
+  // Re-build FormData to forward to FastAPI
+  const outgoing = new FormData()
+  const sessionId   = incoming.get('session_id')
+  const fileName    = incoming.get('file_name')
+  const chunkIndex  = incoming.get('chunk_index')
+  const dataBlob    = incoming.get('data')
+
+  if (!sessionId || !fileName || chunkIndex === null || !dataBlob) {
+    return Response.json({ error: 'Missing required fields' }, { status: 400 })
+  }
+
+  outgoing.append('session_id',   sessionId as string)
+  outgoing.append('file_name',    fileName as string)
+  outgoing.append('chunk_index',  chunkIndex as string)
+  outgoing.append('data', dataBlob as Blob, fileName as string)
 
   let backendRes: Response
   try {
     backendRes = await fetch(`${BACKEND_URL}/upload-chunk`, {
       method: 'POST',
-      headers: {
-        'x-internal-key': BACKEND_API_KEY,
-        'content-type': contentType,
-      },
-      body: req.body,
-    } as RequestInit)
+      headers: { 'x-internal-key': BACKEND_API_KEY },
+      body: outgoing,
+    })
   } catch {
     return Response.json({ error: 'לא ניתן להתחבר לשרת העיבוד.' }, { status: 503 })
   }
