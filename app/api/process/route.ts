@@ -1,3 +1,4 @@
+import { createHmac } from 'crypto'
 import { NextRequest } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { getCredits, deductCredit, isUserBlocked, ensureUser } from '@/lib/credits'
@@ -62,59 +63,49 @@ export async function POST(req: NextRequest) {
       return Response.json({ ok: true })
     }
 
+    if (action === 'init') {
+      await ensureUser(userId)
+      const blocked = await isUserBlocked(userId)
+      if (blocked) return Response.json({ error: 'חשבונך חסום. צור קשר עם התמיכה.' }, { status: 403 })
+      const credits = await getCredits(userId)
+      if (credits <= 0) return Response.json({ error: 'אין קרדיטים זמינים. רכוש קרדיטים בדשבורד.' }, { status: 402 })
+      const expiresAt = Date.now() + 600_000 // 10 minutes
+      const payload = `${userId}:${expiresAt}`
+      const sig = createHmac('sha256', BACKEND_API_KEY).update(payload).digest('hex')
+      return Response.json({ token: `${payload}:${sig}` })
+    }
+
+    if (action === 'deduct_credit') {
+      await deductCredit(userId)
+      return Response.json({ ok: true })
+    }
+
+    if (action === 'process_session') {
+      const { session_id, file_names } = body
+      let backendRes: Response
+      try {
+        backendRes = await fetch(`${BACKEND_URL}/process-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-internal-key': BACKEND_API_KEY },
+          body: JSON.stringify({ session_id, file_names }),
+        })
+      } catch {
+        return Response.json({ error: 'לא ניתן להתחבר לשרת העיבוד.' }, { status: 503 })
+      }
+      if (!backendRes.ok || !backendRes.body) {
+        return Response.json({ error: 'שגיאה בשרת העיבוד.' }, { status: 502 })
+      }
+      return new Response(backendRes.body, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'X-Accel-Buffering': 'no',
+        },
+      })
+    }
+
     return Response.json({ error: 'Unknown action' }, { status: 400 })
   }
 
-  // ── Multipart: PDF upload → proxy to backend with SSE stream ─────────────
-  await ensureUser(userId)
-
-  const blocked = await isUserBlocked(userId)
-  if (blocked) return Response.json({ error: 'חשבונך חסום. צור קשר עם התמיכה.' }, { status: 403 })
-
-  const credits = await getCredits(userId)
-  if (credits <= 0) return Response.json({ error: 'אין קרדיטים זמינים. רכוש קרדיטים בדשבורד.' }, { status: 402 })
-
-  let backendRes: globalThis.Response
-  try {
-    const formData = await req.formData()
-    backendRes = await fetch(`${BACKEND_URL}/process`, {
-      method: 'POST',
-      headers: { 'x-internal-key': BACKEND_API_KEY },
-      body: formData,
-      // @ts-ignore — Node 18+ requires duplex for streaming request bodies
-      duplex: 'half',
-    })
-  } catch {
-    return Response.json({ error: 'לא ניתן להתחבר לשרת העיבוד.' }, { status: 503 })
-  }
-
-  if (!backendRes.ok || !backendRes.body) {
-    return Response.json({ error: 'שגיאה בשרת העיבוד.' }, { status: 502 })
-  }
-
-  // Pipe SSE stream to browser; deduct one credit when backend reports done
-  const decoder = new TextDecoder()
-  let creditDeducted = false
-  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>({
-    transform(chunk, controller) {
-      if (!creditDeducted) {
-        const text = decoder.decode(chunk, { stream: true })
-        if (text.includes('"type":"done"')) {
-          creditDeducted = true
-          deductCredit(userId).catch(console.error)
-        }
-      }
-      controller.enqueue(chunk)
-    },
-  })
-
-  backendRes.body.pipeTo(writable).catch(() => {})
-
-  return new Response(readable, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'X-Accel-Buffering': 'no',
-    },
-  })
+  return Response.json({ error: 'Unsupported content type' }, { status: 415 })
 }

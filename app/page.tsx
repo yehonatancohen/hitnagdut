@@ -436,22 +436,87 @@ export default function Home() {
     setObjections([]); setLogsOpen(true); setErrorMsg(''); setExpandedAnalysis(new Set())
     setProcessingStep(0)
 
+    const CHUNK_SIZE = 3.5 * 1024 * 1024 // 3.5 MB — safely under Vercel's 4.5 MB CDN limit
+
     try {
-      setLogs(['שולח קבצים לעיבוד...'])
+      setLogs(['מכין קבצים לעיבוד...'])
 
-      const formData = new FormData()
-      files.forEach(f => formData.append('files', f))
+      // Step 1: obtain short-lived upload token (auth + credit check in Lambda)
+      const initRes = await fetch('/api/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'init' }),
+      })
+      if (!initRes.ok) {
+        const err = await initRes.json().catch(() => ({}))
+        setErrorMsg(err.error || 'שגיאה בהכנת העיבוד.')
+        setState('error'); return
+      }
+      const { token } = await initRes.json()
 
-      const res = await fetch('/api/process', { method: 'POST', body: formData })
+      // Step 2: upload files in chunks — each chunk < 3.5 MB to stay under Vercel's 4.5 MB limit
+      const sessionId = crypto.randomUUID()
+      const fileNames: string[] = files.map(f => f.name)
+
+      const totalChunks = files.reduce((acc, f) => acc + Math.ceil(f.size / CHUNK_SIZE), 0)
+      let uploadedChunks = 0
+
+      setLogs([`שולח ${files.length === 1 ? 'קובץ' : `${files.length} קבצים`}...`])
+
+      for (const file of files) {
+        const numChunks = Math.ceil(file.size / CHUNK_SIZE)
+        for (let i = 0; i < numChunks; i++) {
+          const start = i * CHUNK_SIZE
+          const chunkBlob = file.slice(start, Math.min(start + CHUNK_SIZE, file.size))
+
+          const chunkForm = new FormData()
+          chunkForm.append('session_id', sessionId)
+          chunkForm.append('file_name', file.name)
+          chunkForm.append('chunk_index', String(i))
+          chunkForm.append('data', chunkBlob, file.name)
+
+          const chunkRes = await fetch('/api/upload-chunk', {
+            method: 'POST',
+            headers: { 'x-upload-token': token },
+            body: chunkForm,
+          })
+          if (!chunkRes.ok) {
+            const err = await chunkRes.json().catch(() => ({}))
+            setErrorMsg(err.error || 'שגיאה בשליחת הקובץ.')
+            setState('error'); return
+          }
+
+          uploadedChunks++
+          if (totalChunks > 1) {
+            const pct = Math.round((uploadedChunks / totalChunks) * 100)
+            setLogs(prev => {
+              const next = [...prev]
+              next[next.length - 1] = `שולח ${files.length === 1 ? 'קובץ' : `${files.length} קבצים`}: ${pct}%`
+              return next
+            })
+          }
+        }
+      }
+
+      setLogs(prev => [...prev, 'מעבד קבצים...'])
+
+      // Step 3: trigger processing and stream SSE response
+      const res = await fetch('/api/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'process_session', session_id: sessionId, file_names: fileNames }),
+      })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         setErrorMsg(err.error || 'שגיאה בעיבוד. אנא נסה שוב.')
         setState('error'); return
       }
       if (!res.body) throw new Error('no body')
+
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
       let buf = ''
+      let processingDone = false
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
@@ -461,10 +526,23 @@ export default function Home() {
         for (const part of parts) {
           for (const line of part.split('\n')) {
             if (line.startsWith('data: ')) {
-              try { handleSSEEvent(JSON.parse(line.slice(6))) } catch {}
+              try {
+                const event = JSON.parse(line.slice(6))
+                handleSSEEvent(event)
+                if (event.type === 'done') processingDone = true
+              } catch {}
             }
           }
         }
+      }
+
+      // Step 4: deduct credit after successful processing
+      if (processingDone) {
+        fetch('/api/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'deduct_credit' }),
+        }).catch(() => {})
       }
     } catch {
       setErrorMsg('שגיאת רשת בעיבוד. אנא נסה שוב.')

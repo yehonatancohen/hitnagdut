@@ -5,7 +5,7 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '50mb',
     },
-    middlewareClientMaxBodySize: 52428800, // 50MB — covers requests that pass through middleware
+    proxyClientMaxBodySize: 52428800, // 50MB — covers requests that pass through middleware
   },
 }
 
