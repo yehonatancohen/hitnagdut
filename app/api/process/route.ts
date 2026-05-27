@@ -69,15 +69,11 @@ export async function POST(req: NextRequest) {
       if (blocked) return Response.json({ error: 'חשבונך חסום. צור קשר עם התמיכה.' }, { status: 403 })
       const credits = await getCredits(userId)
       if (credits <= 0) return Response.json({ error: 'אין קרדיטים זמינים. רכוש קרדיטים בדשבורד.' }, { status: 402 })
+      await deductCredit(userId)
       const expiresAt = Date.now() + 600_000 // 10 minutes
       const payload = `${userId}:${expiresAt}`
       const sig = createHmac('sha256', BACKEND_API_KEY).update(payload).digest('hex')
       return Response.json({ token: `${payload}:${sig}` })
-    }
-
-    if (action === 'deduct_credit') {
-      await deductCredit(userId)
-      return Response.json({ ok: true })
     }
 
     if (action === 'process_session') {

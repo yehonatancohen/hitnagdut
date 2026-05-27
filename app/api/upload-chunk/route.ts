@@ -1,5 +1,5 @@
-import { createHmac } from 'crypto'
 import { NextRequest } from 'next/server'
+import { validateUploadToken } from '@/lib/upload-token'
 
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
@@ -7,24 +7,9 @@ export const dynamic = 'force-dynamic'
 const BACKEND_URL     = process.env.BACKEND_URL     || 'http://localhost:8000'
 const BACKEND_API_KEY = process.env.BACKEND_API_KEY || ''
 
-function validateToken(token: string): boolean {
-  const parts = token.split(':')
-  if (parts.length !== 3) return false
-  const [userId, expiresAtStr, sig] = parts
-  const expiresAt = parseInt(expiresAtStr, 10)
-  if (isNaN(expiresAt) || expiresAt < Date.now()) return false
-  const expected = createHmac('sha256', BACKEND_API_KEY)
-    .update(`${userId}:${expiresAtStr}`)
-    .digest('hex')
-  if (sig.length !== expected.length) return false
-  let diff = 0
-  for (let i = 0; i < sig.length; i++) diff |= sig.charCodeAt(i) ^ expected.charCodeAt(i)
-  return diff === 0
-}
-
 export async function POST(req: NextRequest) {
   const token = req.headers.get('x-upload-token') || ''
-  if (!validateToken(token)) {
+  if (!await validateUploadToken(token)) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

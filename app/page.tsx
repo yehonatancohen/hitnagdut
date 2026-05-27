@@ -420,7 +420,6 @@ export default function Home() {
       setObjections(event.objections ?? [])
       setSummary(event.summary ?? [])
       setState('preview')
-      setCredits(prev => prev !== null ? Math.max(0, prev - 1) : null)
     } else if (event.type === 'error') {
       setErrorMsg(event.message as string)
       setState('error')
@@ -453,6 +452,7 @@ export default function Home() {
         setState('error'); return
       }
       const { token } = await initRes.json()
+      setCredits(prev => prev !== null ? Math.max(0, prev - 1) : null)
 
       // Step 2: upload files in chunks — each chunk < 3.5 MB to stay under Vercel's 4.5 MB limit
       const sessionId = crypto.randomUUID()
@@ -536,14 +536,6 @@ export default function Home() {
         }
       }
 
-      // Step 4: deduct credit after successful processing
-      if (processingDone) {
-        fetch('/api/process', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'deduct_credit' }),
-        }).catch(() => {})
-      }
     } catch {
       setErrorMsg('שגיאת רשת בעיבוד. אנא נסה שוב.')
       setState('error')
