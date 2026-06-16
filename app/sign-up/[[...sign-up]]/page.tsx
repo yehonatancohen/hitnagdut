@@ -68,7 +68,11 @@ export default function SignUpPage() {
 
       <SignUp appearance={appearance} />
 
-      <p style={{ marginTop: 20, color: 'var(--muted)', fontSize: 14 }}>
+      <p style={{ marginTop: 16, color: 'var(--muted)', fontSize: 12.5, maxWidth: 400, textAlign: 'center' }}>
+        אם ההרשמה עם Google לא מתקדמת, ייתכן שמוצג אימות אנושי (CAPTCHA) בחלון שנפתח — יש לאשר אותו כדי להמשיך. ודאו שחלונות קופצים אינם חסומים בדפדפן.
+      </p>
+
+      <p style={{ marginTop: 12, color: 'var(--muted)', fontSize: 14 }}>
         כבר יש לך חשבון?{' '}
         <Link href="/sign-in" style={{ color: 'var(--brass)', fontWeight: 700, textDecoration: 'none' }}>
           כניסה למערכת

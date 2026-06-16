@@ -36,7 +36,7 @@ export async function POST(req: Request) {
     if (user) {
       await sql`
         INSERT INTO user_credits (user_id, credits_remaining)
-        VALUES (${user.id}, 0)
+        VALUES (${user.id}, 1)
         ON CONFLICT (user_id) DO NOTHING
       `
     }

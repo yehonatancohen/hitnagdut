@@ -43,3 +43,9 @@ create index if not exists idx_users_clerk_id      on users(clerk_id);
 create index if not exists idx_user_credits_user   on user_credits(user_id);
 create index if not exists idx_jobs_user_created   on jobs(user_id, created_at desc);
 create index if not exists idx_purchases_user      on purchases(user_id);
+
+-- Referral program: each user gets a shareable code; referred_by tracks who
+-- invited them so the inviter can be credited exactly once.
+alter table users add column if not exists referral_code text;
+alter table users add column if not exists referred_by uuid references users(id);
+create unique index if not exists idx_users_referral_code on users(referral_code) where referral_code is not null;

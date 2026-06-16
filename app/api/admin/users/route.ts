@@ -1,9 +1,33 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth, clerkClient } from '@clerk/nextjs/server'
 import sql from '@/lib/db'
 
 async function assertAdmin(clerkId: string) {
   const [row] = await sql`SELECT role FROM users WHERE clerk_id = ${clerkId}`
   if (row?.role !== 'admin') throw new Error('Forbidden')
+}
+
+// Backfills email/name for users whose webhook sync never populated them
+// (e.g. accounts created before the webhook was wired up).
+async function backfillMissingProfiles(users: any[]) {
+  const missing = users.filter(u => !u.email)
+  if (!missing.length) return users
+
+  const client = await clerkClient()
+  await Promise.all(missing.map(async u => {
+    try {
+      const clerkUser = await client.users.getUser(u.clerk_id)
+      const email = clerkUser.emailAddresses?.[0]?.emailAddress ?? null
+      const name  = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || null
+      if (email || name) {
+        await sql`UPDATE users SET email = ${email}, name = ${name} WHERE id = ${u.id}`
+        u.email = email
+        u.name = name
+      }
+    } catch {
+      // Clerk user may no longer exist — leave as-is
+    }
+  }))
+  return users
 }
 
 export async function GET() {
@@ -18,6 +42,7 @@ export async function GET() {
     LEFT JOIN user_credits uc ON uc.user_id = u.id
     ORDER BY u.created_at DESC
   `
+  await backfillMissingProfiles(users)
   return Response.json({ users })
 }
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
+import Link from 'next/link'
 
 interface AdminUser {
   id: string
@@ -79,9 +80,22 @@ export default function AdminPage() {
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 28 }}>
 
         {/* Header */}
-        <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--navy)', margin: 0, letterSpacing: '-0.5px' }}>ניהול משתמשים</h1>
-          <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 4 }}>{users.length} משתמשים רשומים</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--navy)', margin: 0, letterSpacing: '-0.5px' }}>ניהול משתמשים</h1>
+            <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 4 }}>{users.length} משתמשים רשומים</p>
+          </div>
+          <Link href="/dashboard" style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'var(--navy)', color: '#fff',
+            fontSize: 14, fontWeight: 700, padding: '9px 18px',
+            borderRadius: 4, textDecoration: 'none', transition: 'opacity 0.15s',
+          }}>
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7 7-7M3 12h18" />
+            </svg>
+            חזרה לדשבורד
+          </Link>
         </div>
 
         {/* Users table */}

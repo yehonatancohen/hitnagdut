@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
+import ReferralSection from '../components/ReferralSection'
 
 interface Job {
   id: string
@@ -24,42 +25,13 @@ export default function DashboardPage() {
   const [credits, setCredits] = useState<number | null>(null)
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
-  const [purchasing, setPurchasing] = useState<string | null>(null)
-  const [purchaseMsg, setPurchaseMsg] = useState('')
-
   useEffect(() => {
-    Promise.all([
-      fetch('/api/credits').then(r => r.ok ? r.json() : null),
-      fetch('/api/jobs').then(r => r.ok ? r.json() : null),
-    ]).then(([cData, jData]) => {
-      setCredits(cData?.credits ?? 0)
-      setJobs(jData?.jobs ?? [])
+    fetch('/api/dashboard').then(r => r.ok ? r.json() : null).then(d => {
+      setCredits(d?.credits ?? 0)
+      setJobs(d?.jobs ?? [])
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [])
-
-  const handlePurchase = async (planKey: string) => {
-    setPurchasing(planKey)
-    setPurchaseMsg('')
-    try {
-      const res = await fetch('/api/purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planKey }),
-      })
-      const data = res.ok ? await res.json() : null
-      if (data?.ok) {
-        setCredits(prev => (prev ?? 0) + data.credits_added)
-        setPurchaseMsg(`✓ נוספו ${data.credits_added} קרדיטים לחשבונך`)
-      } else {
-        setPurchaseMsg(`שגיאה: הרכישה נכשלה. נסה שוב.`)
-      }
-    } catch {
-      setPurchaseMsg('שגיאה: הרכישה נכשלה. נסה שוב.')
-    } finally {
-      setPurchasing(null)
-    }
-  }
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -120,23 +92,12 @@ export default function DashboardPage() {
         <section>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--navy)', marginBottom: 16 }}>רכישת קרדיטים</h2>
 
-          {purchaseMsg && (
-            <div style={{
-              marginBottom: 16,
-              background: purchaseMsg.startsWith('שגיאה') ? 'rgba(220,38,38,0.07)' : 'rgba(29,111,66,0.08)',
-              border: `1px solid ${purchaseMsg.startsWith('שגיאה') ? 'rgba(220,38,38,0.2)' : 'rgba(29,111,66,0.2)'}`,
-              color: purchaseMsg.startsWith('שגיאה') ? '#DC2626' : 'var(--excel-green-text)',
-              fontSize: 14, fontWeight: 600, padding: '10px 16px', borderRadius: 4,
-            }}>
-              {purchaseMsg}
-            </div>
-          )}
-
           <div className="plans-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
             {PLANS.map(plan => (
               <div key={plan.key} style={{
                 background: '#fff', border: '1px solid var(--border-warm)', borderRadius: 4,
                 padding: 20, display: 'flex', flexDirection: 'column', gap: 16, position: 'relative',
+                opacity: 0.7,
               }}>
                 {plan.badge && (
                   <span style={{
@@ -153,36 +114,27 @@ export default function DashboardPage() {
                   <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>{plan.credits} קרדיטים</p>
                 </div>
                 <button
-                  onClick={() => handlePurchase(plan.key)}
-                  disabled={purchasing === plan.key}
+                  disabled
                   style={{
                     width: '100%', padding: '10px 0',
-                    background: purchasing === plan.key ? 'var(--muted)' : 'var(--navy)',
+                    background: 'var(--muted)',
                     color: '#fff', fontWeight: 700, fontSize: 14,
-                    borderRadius: 4, border: 'none', cursor: purchasing === plan.key ? 'default' : 'pointer',
-                    transition: 'opacity 0.15s', opacity: purchasing === plan.key ? 0.6 : 1,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    borderRadius: 4, border: 'none', cursor: 'not-allowed',
                   }}
                 >
-                  {purchasing === plan.key ? (
-                    <>
-                      <span style={{
-                        width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)',
-                        borderTopColor: '#fff', borderRadius: '50%',
-                        animation: 'spin-brass 0.75s linear infinite', display: 'inline-block',
-                      }} />
-                      מעבד...
-                    </>
-                  ) : 'רכוש עכשיו'}
+                  בקרוב
                 </button>
               </div>
             ))}
           </div>
 
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 12 }}>
-            * שילוב עם ספק תשלומים ייקבע בהמשך. כרגע הרכישה מדמה הוספת קרדיטים ישירות.
+            * רכישת קרדיטים תתאפשר בקרוב, לאחר חיבור ספק תשלומים. בינתיים ניתן לצבור קרדיטים בעזרת הזמנת חברים למטה.
           </p>
         </section>
+
+        {/* Invite a friend */}
+        <ReferralSection />
 
         {/* Job history */}
         <section>
@@ -222,7 +174,7 @@ export default function DashboardPage() {
               <table style={{ width: '100%', minWidth: 500, fontSize: 13, textAlign: 'right', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-warm)' }}>
-                    {['תאריך', 'קבצים', 'סעיפים', 'סטטוס'].map((h, i) => (
+                    {['תאריך', 'קבצים', 'סעיפים', 'סטטוס', 'הורדה'].map((h, i) => (
                       <th key={h} style={{
                         padding: '10px 16px', fontSize: 11, fontWeight: 700,
                         color: '#fff', letterSpacing: '0.5px', textTransform: 'uppercase',
@@ -256,6 +208,19 @@ export default function DashboardPage() {
                         }}>
                           הושלם
                         </span>
+                      </td>
+                      <td style={{ padding: '10px 16px', textAlign: 'center' }}>
+                        <a href={`/api/jobs/${job.id}/download`} style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          fontSize: 12, fontWeight: 700, color: 'var(--excel-green-text)',
+                          textDecoration: 'none', padding: '4px 10px', borderRadius: 4,
+                          border: '1px solid rgba(29,111,66,0.25)',
+                        }}>
+                          <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14" />
+                          </svg>
+                          הורד
+                        </a>
                       </td>
                     </tr>
                   ))}

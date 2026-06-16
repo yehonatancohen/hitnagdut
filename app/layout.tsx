@@ -3,6 +3,7 @@ import { Heebo } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
 import NavBar from './components/NavBar'
+import ReferralCapture from './components/ReferralCapture'
 
 const heebo = Heebo({
   subsets: ['hebrew', 'latin'],
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider>
       <html lang="he" dir="rtl" className={heebo.variable}>
         <body className="font-heebo bg-slate-50 text-slate-800 antialiased">
+          <ReferralCapture />
           <NavBar />
           {children}
         </body>

@@ -15,7 +15,7 @@ export async function ensureUser(
   `
   await sql`
     INSERT INTO user_credits (user_id, credits_remaining)
-    VALUES (${created.id}, 0)
+    VALUES (${created.id}, 1)
     ON CONFLICT (user_id) DO NOTHING
   `
   return created.id as string

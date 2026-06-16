@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 type AppState = 'idle' | 'processing' | 'preview' | 'done' | 'error'
@@ -132,7 +133,7 @@ function MiniExcelTable() {
   )
 }
 
-function LandingPage({ onEnterApp }: { onEnterApp: () => void }) {
+function LandingPage({ onEnterApp, onPricingCTA }: { onEnterApp: () => void; onPricingCTA: () => void }) {
   return (
     <div style={{ direction: 'rtl' }}>
 
@@ -295,7 +296,7 @@ function LandingPage({ onEnterApp }: { onEnterApp: () => void }) {
                     </div>
                   ))}
                 </div>
-                <button onClick={onEnterApp} style={{ width: '100%', padding: '12px', background: tier.highlight ? 'var(--brass)' : 'transparent', color: tier.highlight ? '#fff' : 'var(--navy)', border: tier.highlight ? 'none' : '1.5px solid var(--border-warm)', borderRadius: 4, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'opacity 0.18s' }}>
+                <button onClick={onPricingCTA} style={{ width: '100%', padding: '12px', background: tier.highlight ? 'var(--brass)' : 'transparent', color: tier.highlight ? '#fff' : 'var(--navy)', border: tier.highlight ? 'none' : '1.5px solid var(--border-warm)', borderRadius: 4, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'opacity 0.18s' }}>
                   {tier.cta}
                 </button>
               </div>
@@ -337,6 +338,7 @@ const PROCESSING_STEPS = [
 
 export default function Home() {
   const { isLoaded, isSignedIn } = useUser()
+  const router = useRouter()
   const [view, setView] = useState<'landing' | 'tool'>('landing')
   const [state, setState] = useState<AppState>('idle')
   const [files, setFiles] = useState<File[]>([])
@@ -661,7 +663,12 @@ export default function Home() {
   }
 
   if (view === 'landing') {
-    return <LandingPage onEnterApp={() => setView('tool')} />
+    return (
+      <LandingPage
+        onEnterApp={() => setView('tool')}
+        onPricingCTA={() => router.push(isSignedIn ? '/dashboard' : '/sign-up')}
+      />
+    )
   }
 
   // ── Tool view ──
